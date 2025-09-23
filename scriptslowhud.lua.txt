@@ -34,17 +34,10 @@ local Tab1o = MakeTab({Name = "Auto farm"})
 local Tab2o = MakeTab({Name = "combat"})
 
 ------ BUTTON
--- Auto Farm Bandit + Nhận Nhiệm Vụ
+-- Auto Farm Bandit (Dùng Remote Attack)
 local autofarm = false
-local vu = game:GetService("VirtualUser")
 local plr = game.Players.LocalPlayer
 local rs = game:GetService("ReplicatedStorage")
-
-function Attack()
-    vu:Button1Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-    task.wait(0.1)
-    vu:Button1Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-end
 
 -- Hàm nhận nhiệm vụ Bandit
 function GetQuest()
@@ -54,6 +47,12 @@ function GetQuest()
         [3] = 1
     }
     rs.Remotes.CommF_:InvokeServer(unpack(args))
+end
+
+-- Hàm đánh quái bằng Skill/Attack remote
+function Attack(enemy)
+    -- gọi combat remote của game (đòn đánh thường)
+    rs.Remotes.Combat:FireServer(enemy.HumanoidRootPart)
 end
 
 function AutoFarm()
@@ -68,8 +67,9 @@ function AutoFarm()
     for _,enemy in pairs(workspace.Enemies:GetChildren()) do
         if enemy.Name:match("Bandit") and enemy:FindFirstChild("HumanoidRootPart") and enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 then
             plr.Character.HumanoidRootPart.CFrame = enemy.HumanoidRootPart.CFrame * CFrame.new(0,0,3)
+            -- spam tấn công
             for i=1,5 do
-                Attack()
+                Attack(enemy)
                 task.wait(0.2)
             end
         end
