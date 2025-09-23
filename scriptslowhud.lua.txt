@@ -35,26 +35,7 @@ local Tab2o = MakeTab({Name = "combat"})
 
 ------ BUTTON
 -- local autofarm = false
-
--- Hàm tìm NPC nhiệm vụ Bandit
-local function GetQuestNPC()
-    for _, npc in pairs(workspace.NPCs:GetChildren()) do
-        if npc.Name == "QuestBandit" then
-            return npc
-        end
-    end
-    return nil
-end
-
--- Hàm nhận nhiệm vụ Bandit
-local function TakeQuest()
-    local npc = GetQuestNPC()
-    if npc and npc:FindFirstChild("HumanoidRootPart") then
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = npc.HumanoidRootPart.CFrame + Vector3.new(0,3,0)
-        task.wait(0.5)
-        game.ReplicatedStorage.Remotes.Quest:FireServer("BanditQuest")
-    end
-end
+local VirtualUser = game:GetService("VirtualUser")
 
 -- Hàm tìm Bandit còn sống
 local function GetBandit()
@@ -70,12 +51,14 @@ end
 local function AttackBandit(bandit)
     while bandit and bandit:FindFirstChild("Humanoid") and bandit.Humanoid.Health > 0 and autofarm do
         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = bandit.HumanoidRootPart.CFrame + Vector3.new(0,0,2)
-        game.ReplicatedStorage.Remotes.Attack:FireServer(bandit)
+        VirtualUser:Button1Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+        task.wait(0.1)
+        VirtualUser:Button1Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
         task.wait(0.3)
     end
 end
 
--- Toggle nút AutoFarm Bandit
+-- Toggle Auto Farm Bandit
 AddToggle(Tab1o, {
     Name = "Auto Farm Bandit",
     Default = false,
@@ -85,10 +68,7 @@ AddToggle(Tab1o, {
             spawn(function()
                 while autofarm do
                     local bandit = GetBandit()
-                    if not bandit then
-                        -- nếu chưa có quái thì nhận nhiệm vụ lại
-                        TakeQuest()
-                    else
+                    if bandit then
                         AttackBandit(bandit)
                     end
                     task.wait(0.5)
@@ -97,6 +77,7 @@ AddToggle(Tab1o, {
         end
     end
 })
+
   AddButton(Tab2o, {
      Name = "blue x",
     Callback = function()
