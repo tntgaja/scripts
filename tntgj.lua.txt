@@ -3,7 +3,7 @@ loadstring(game:HttpGet(("https://raw.githubusercontent.com/daucobonhi/Ui-Redz-V
        local Window = MakeWindow({
          Hub = {
          Title = "TNT Roblox",
-         Animation = "Youtube: TNT GJ"
+         Animation = "By: TNT GJ"
          },
         Key = {
         KeySystem = false,
@@ -30,22 +30,57 @@ loadstring(game:HttpGet(("https://raw.githubusercontent.com/daucobonhi/Ui-Redz-V
       })
       
 ------ Tab
-     local Tab1o = MakeTab({Name = "chưa hoàn thiện"})
-  local Tab2o = MakeTab({Name = "chưa hoàn thiện2"})   
-------- BUTTON
-    
-    AddButton(Tab1o, {
-     Name = "redz",
-    Callback = function()
-	  local Settings = {
-  JoinTeam = "Pirates"; -- Pirates/Marines
-  Translator = true; -- true/false
-}
+local Tab1o = MakeTab({Name = "Auto farm"})
+local Tab2o = MakeTab({Name = "combat"})
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/realredz/BloxFruits/refs/heads/main/Source.lua"))(Settings)
-  end
-  })
-  
+------ BUTTON
+local autofarm = false
+
+-- Hàm AutoFarm test Bandit
+function AutoFarm()
+    local player = game.Players.LocalPlayer
+    local char = player.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    local target = nil
+    local dist = math.huge
+    for _, mob in pairs(workspace.Enemies:GetChildren()) do
+        if mob.Name == "Bandit" and mob:FindFirstChild("HumanoidRootPart") and mob:FindFirstChild("Humanoid").Health > 0 then
+            local mag = (hrp.Position - mob.HumanoidRootPart.Position).Magnitude
+            if mag < dist then
+                dist = mag
+                target = mob
+            end
+        end
+    end
+
+    if target then
+        -- Dịch chuyển gần Bandit
+        hrp.CFrame = target.HumanoidRootPart.CFrame * CFrame.new(0,0,3)
+
+        -- Gửi lệnh đánh (giả lập tấn công)
+        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Attack", target)
+    end
+end
+
+-- Toggle Auto Farm
+AddToggle(Tab1o, {
+    Name = "Auto Farm Bandit (Test)",
+    Default = false,
+    Callback = function(Value)
+        autofarm = Value
+        if autofarm then
+            spawn(function()
+                while autofarm do
+                    AutoFarm()
+                    task.wait(1)
+                end
+            end)
+        end
+    end
+})
+
   AddButton(Tab2o, {
      Name = "blue x",
     Callback = function()
