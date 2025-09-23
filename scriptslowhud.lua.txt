@@ -3,7 +3,7 @@ loadstring(game:HttpGet(("https://raw.githubusercontent.com/daucobonhi/Ui-Redz-V
        local Window = MakeWindow({
          Hub = {
          Title = "TNT Roblox",
-         Animation = "By: TNTgj Roblox"
+         Animation = "By: TNTgaja Roblox"
          },
         Key = {
         KeySystem = false,
@@ -30,9 +30,8 @@ loadstring(game:HttpGet(("https://raw.githubusercontent.com/daucobonhi/Ui-Redz-V
       })
       
 ------ Tab
-local Tab1o = MakeTab({Name = " cài đặt"})
-local Tab2o = MakeTab({Name = "auto fram"})
-local Tab3o = MakeTab({Name = " combat "})
+local Tab1o = MakeTab({Name = " auto fram"})
+local Tab2o = MakeTab({Name = "combat"})
 
 ------ BUTTON
 -- local autofarm = false
@@ -80,7 +79,7 @@ AddToggle(Tab1o, {
 })
 
   AddButton(Tab2o, {
-     Name = "blue x",
+     Name = "aim",
     Callback = function()
 	  local Settings = {
   JoinTeam = "Pirates"; -- Pirates/Marines
