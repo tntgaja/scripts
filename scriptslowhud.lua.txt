@@ -34,49 +34,48 @@ local Tab1o = MakeTab({Name = "Auto farm"})
 local Tab2o = MakeTab({Name = "combat"})
 
 ------ BUTTON
--- Auto Farm Bandit (Dùng Remote Attack)
-local autofarm = false
-local plr = game.Players.LocalPlayer
-local rs = game:GetService("ReplicatedStorage")
+-- local autofarm = false
 
--- Hàm nhận nhiệm vụ Bandit
-function GetQuest()
-    local args = {
-        [1] = "StartQuest",
-        [2] = "BanditQuest1",
-        [3] = 1
-    }
-    rs.Remotes.CommF_:InvokeServer(unpack(args))
-end
-
--- Hàm đánh quái bằng Skill/Attack remote
-function Attack(enemy)
-    -- gọi combat remote của game (đòn đánh thường)
-    rs.Remotes.Combat:FireServer(enemy.HumanoidRootPart)
-end
-
-function AutoFarm()
-    -- Kiểm tra có quest chưa, nếu chưa thì nhận
-    local quest = plr.PlayerGui:FindFirstChild("Main") and plr.PlayerGui.Main:FindFirstChild("Quest")
-    if not quest or not quest.Visible then
-        GetQuest()
-        task.wait(1)
-    end
-
-    -- Tìm và đánh Bandit
-    for _,enemy in pairs(workspace.Enemies:GetChildren()) do
-        if enemy.Name:match("Bandit") and enemy:FindFirstChild("HumanoidRootPart") and enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 then
-            plr.Character.HumanoidRootPart.CFrame = enemy.HumanoidRootPart.CFrame * CFrame.new(0,0,3)
-            -- spam tấn công
-            for i=1,5 do
-                Attack(enemy)
-                task.wait(0.2)
-            end
+-- Hàm tìm NPC nhiệm vụ Bandit
+local function GetQuestNPC()
+    for _, npc in pairs(workspace.NPCs:GetChildren()) do
+        if npc.Name == "QuestBandit" then
+            return npc
         end
     end
+    return nil
 end
 
--- Nút bật/tắt
+-- Hàm nhận nhiệm vụ Bandit
+local function TakeQuest()
+    local npc = GetQuestNPC()
+    if npc and npc:FindFirstChild("HumanoidRootPart") then
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = npc.HumanoidRootPart.CFrame + Vector3.new(0,3,0)
+        task.wait(0.5)
+        game.ReplicatedStorage.Remotes.Quest:FireServer("BanditQuest")
+    end
+end
+
+-- Hàm tìm Bandit còn sống
+local function GetBandit()
+    for _, mob in pairs(workspace.Enemies:GetChildren()) do
+        if mob.Name == "Bandit" and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 then
+            return mob
+        end
+    end
+    return nil
+end
+
+-- Hàm đánh Bandit
+local function AttackBandit(bandit)
+    while bandit and bandit:FindFirstChild("Humanoid") and bandit.Humanoid.Health > 0 and autofarm do
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = bandit.HumanoidRootPart.CFrame + Vector3.new(0,0,2)
+        game.ReplicatedStorage.Remotes.Attack:FireServer(bandit)
+        task.wait(0.3)
+    end
+end
+
+-- Toggle nút AutoFarm Bandit
 AddToggle(Tab1o, {
     Name = "Auto Farm Bandit",
     Default = false,
@@ -85,14 +84,19 @@ AddToggle(Tab1o, {
         if autofarm then
             spawn(function()
                 while autofarm do
-                    AutoFarm()
+                    local bandit = GetBandit()
+                    if not bandit then
+                        -- nếu chưa có quái thì nhận nhiệm vụ lại
+                        TakeQuest()
+                    else
+                        AttackBandit(bandit)
+                    end
                     task.wait(0.5)
                 end
             end)
         end
     end
 })
-
   AddButton(Tab2o, {
      Name = "blue x",
     Callback = function()
