@@ -1,91 +1,86 @@
 loadstring(game:HttpGet(("https://raw.githubusercontent.com/daucobonhi/Ui-Redz-V2/refs/heads/main/UiREDzV2.lua")))()
 
        local Window = MakeWindow({
-         Hub = {
-         Title = "TNT Roblox",
-         Animation = "By: TNTgaja Roblox"
-         },
-        Key = {
+    Hub = {
+        Title = "SlowHub",
+        Animation = "By: SlowHub"
+    },
+    Key = {
         KeySystem = false,
         Title = "Key System",
         Description = "",
         KeyLink = "",
         Keys = {"1234"},
         Notifi = {
-        Notifications = true,
-        CorrectKey = "Running the Script...",
-       Incorrectkey = "The key is incorrect",
-       CopyKeyLink = "Copied to Clipboard"
-      }
+            Notifications = true,
+            CorrectKey = "Running SlowHub...",
+            IncorrectKey = "Key sai rồi!",
+            CopyKeyLink = "Đã copy link key!"
+        }
     }
-  })
+})
 
-       MinimizeButton({
-       Image = "http://www.roblox.com/asset/?id=83190276951914",
-       Size = {60, 60},
-       Color = Color3.fromRGB(10, 10, 10),
-       Corner = true,
-       Stroke = false,
-       StrokeColor = Color3.fromRGB(255, 0, 0)
-      })
-      
------- Tab
-local Tab1o = MakeTab({Name = " auto fram"})
-local Tab2o = MakeTab({Name = "combat"})
+MinimizeButton({
+    Image = "http://www.roblox.com/asset/?id=83190276951914",
+    Size = {60, 60},
+    Color = Color3.fromRGB(10, 10, 10),
+    Corner = true,
+    Stroke = false,
+})
 
------- BUTTON
--- local autofarm = false
-local VirtualUser = game:GetService("VirtualUser")
-
--- Hàm tìm Bandit còn sống
-local function GetBandit()
-    for _, mob in pairs(workspace.Enemies:GetChildren()) do
-        if mob.Name == "Bandit" and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 then
-            return mob
-        end
-    end
-    return nil
-end
-
--- Hàm đánh Bandit
-local function AttackBandit(bandit)
-    while bandit and bandit:FindFirstChild("Humanoid") and bandit.Humanoid.Health > 0 and autofarm do
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = bandit.HumanoidRootPart.CFrame + Vector3.new(0,0,2)
-        VirtualUser:Button1Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-        task.wait(0.1)
-        VirtualUser:Button1Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-        task.wait(0.3)
-    end
-end
+-- Tab chính
+local Tab1o = MakeTab({Name = "Auto Farm"})
 
 -- Toggle Auto Farm Bandit
 AddToggle(Tab1o, {
-    Name = "Auto Farm Bandit",
+    Name = "Auto Farm Bandit (Nâng Cao)",
     Default = false,
     Callback = function(Value)
-        autofarm = Value
-        if autofarm then
-            spawn(function()
-                while autofarm do
-                    local bandit = GetBandit()
-                    if bandit then
-                        AttackBandit(bandit)
-                    end
-                    task.wait(0.5)
-                end
-            end)
+        _G.AutoFarmBandit = Value
+        while _G.AutoFarmBandit do task.wait()
+            AutoQuest()
+            AutoEquip()
+            AutoFarmBandit()
         end
     end
 })
 
-  AddButton(Tab2o, {
-     Name = "aim",
-    Callback = function()
-	  local Settings = {
-  JoinTeam = "Pirates"; -- Pirates/Marines
-  Translator = true; -- true/false
-}
+-- Hàm cầm vũ khí
+function AutoEquip()
+    local Weapon = {"Katana","Combat"}
+    for _,v in pairs(Weapon) do
+        if game.Players.LocalPlayer.Backpack:FindFirstChild(v) then
+            game.Players.LocalPlayer.Character.Humanoid:EquipTool(
+                game.Players.LocalPlayer.Backpack[v]
+            )
+        end
+    end
+end
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/realredz/BloxFruits/refs/heads/main/Source.lua"))(Settings)
-  end
-  })
+-- Hàm nhận quest
+function AutoQuest()
+    local Quest = game.Players.LocalPlayer.PlayerGui.Main.Quest
+    if not Quest.Visible then
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame =
+            CFrame.new(1060,16,1548)
+        wait(1)
+        -- Tương tác NPC Quest
+    end
+end
+
+-- Hàm farm Bandit
+function AutoFarmBandit()
+    local Bandit = game.Workspace.Enemies:FindFirstChild("Bandit")
+    if Bandit and Bandit:FindFirstChild("HumanoidRootPart") then
+        local Root = game.Players.LocalPlayer.Character.HumanoidRootPart
+        Root.CFrame = Bandit.HumanoidRootPart.CFrame * CFrame.new(0,10,0)
+        -- đánh quái
+        game:GetService("VirtualUser"):Button1Down(Vector2.new(0,0))
+        wait(0.1)
+        game:GetService("VirtualUser"):Button1Up(Vector2.new(0,0))
+    else
+        -- Không có quái thì quay về spawn Bandit
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame =
+            CFrame.new(1150,16,1600)
+    end
+end
