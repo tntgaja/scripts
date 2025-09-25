@@ -1,0 +1,69 @@
+loadstring(game:HttpGet(("https://raw.githubusercontent.com/daucobonhi/Ui-Redz-V2/refs/heads/main/UiREDzV2.lua")))()
+
+       local Window = MakeWindow({
+         Hub = {
+         Title = "TBoy Roblox",
+         Animation = "Youtube: TBoy Roblox"
+         },
+        Key = {
+        KeySystem = false,
+        Title = "Key System",
+        Description = "",
+        KeyLink = "",
+        Keys = {"1234"},
+        Notifi = {
+        Notifications = true,
+        CorrectKey = "Running the Script...",
+       Incorrectkey = "The key is incorrect",
+       CopyKeyLink = "Copied to Clipboard"
+      }
+    }
+  })
+
+       MinimizeButton({
+       Image = "http://www.roblox.com/asset/?id=83190276951914",
+       Size = {60, 60},
+       Color = Color3.fromRGB(10, 10, 10),
+       Corner = true,
+       Stroke = false,
+       StrokeColor = Color3.fromRGB(255, 0, 0)
+      })
+      
+--// SlowHub Demo UI
+local Tab1 = MakeTab({Name = "Demo"})
+
+-- Toggle
+AddToggle(Tab1, {
+    Name = "Enable Feature",
+    Default = false,
+    Callback = function(Value)
+        print("Toggle state:", Value)
+    end
+})
+
+-- Button
+AddButton(Tab1, {
+    Name = "Click Me",
+    Callback = function()
+        print("Button was clicked")
+    end
+})
+
+-- Dropdown
+AddDropdown(Tab1, {
+    Name = "Choose Option",
+    Options = {"Option 1", "Option 2", "Option 3"},
+    Default = "Option 1",
+    Callback = function(Value)
+        print("You selected:", Value)
+    end
+})
+
+-- Section
+AddSection(Tab1, {"This is a Section"})
+
+-- Paragraph
+AddParagraph(Tab1, {
+    Title = "Instructions",
+    Content = "This is just an example showing how to create basic UI elements."
+})
