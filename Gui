@@ -1,0 +1,148 @@
+--// Services
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local player = Players.LocalPlayer
+
+--// GUI
+local ScreenGui = Instance.new("ScreenGui", player.PlayerGui)
+ScreenGui.ResetOnSpawn = false
+
+--// Main Frame
+local Main = Instance.new("Frame", ScreenGui)
+Main.Size = UDim2.new(0, 360, 0, 260)
+Main.Position = UDim2.new(0.5, -180, 0.5, -130)
+Main.BackgroundColor3 = Color3.fromRGB(15,15,15)
+Main.BorderSizePixel = 0
+Main.Active = true
+Main.Visible = false
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0,20)
+
+local Stroke = Instance.new("UIStroke", Main)
+Stroke.Color = Color3.fromRGB(0,255,150)
+Stroke.Thickness = 1.5
+
+--// Title
+local Title = Instance.new("TextLabel", Main)
+Title.Size = UDim2.new(1,0,0,45)
+Title.BackgroundTransparency = 1
+Title.Text = "Blade Ball PRO MAX"
+Title.Font = Enum.Font.GothamBold
+Title.TextScaled = true
+Title.TextColor3 = Color3.fromRGB(0,255,150)
+
+--// Close
+local Close = Instance.new("TextButton", Main)
+Close.Size = UDim2.new(0,35,0,35)
+Close.Position = UDim2.new(1,-45,0,5)
+Close.Text = "X"
+Close.BackgroundColor3 = Color3.fromRGB(170,40,40)
+Close.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", Close).CornerRadius = UDim.new(1,0)
+
+--// Tabs
+local TabHolder = Instance.new("Frame", Main)
+TabHolder.Size = UDim2.new(1,0,0,40)
+TabHolder.Position = UDim2.new(0,0,0.18,0)
+TabHolder.BackgroundTransparency = 1
+
+local function createTab(name, pos)
+	local btn = Instance.new("TextButton", TabHolder)
+	btn.Size = UDim2.new(0.33,0,1,0)
+	btn.Position = UDim2.new(pos,0,0,0)
+	btn.Text = name
+	btn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+	btn.TextColor3 = Color3.new(1,1,1)
+	btn.TextScaled = true
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0,10)
+	return btn
+end
+
+local MainTab = createTab("Main",0)
+local VisualTab = createTab("Visual",0.33)
+local SettingsTab = createTab("Settings",0.66)
+
+--// Content Frame
+local Content = Instance.new("Frame", Main)
+Content.Size = UDim2.new(1,-20,0.6,0)
+Content.Position = UDim2.new(0,10,0.38,0)
+Content.BackgroundTransparency = 1
+
+--// Toggle Example
+local Toggle = Instance.new("TextButton", Content)
+Toggle.Size = UDim2.new(1,0,0,55)
+Toggle.Position = UDim2.new(0,0,0,0)
+Toggle.Text = "Auto Parry : OFF"
+Toggle.BackgroundColor3 = Color3.fromRGB(40,40,40)
+Toggle.TextColor3 = Color3.new(1,1,1)
+Toggle.TextScaled = true
+Instance.new("UICorner", Toggle).CornerRadius = UDim.new(0,14)
+
+local Glow = Instance.new("UIStroke", Toggle)
+Glow.Color = Color3.fromRGB(0,255,150)
+Glow.Thickness = 0
+
+local enabled = false
+
+Toggle.MouseButton1Click:Connect(function()
+	enabled = not enabled
+	
+	if enabled then
+		Toggle.Text = "Auto Parry : ON"
+		Toggle.BackgroundColor3 = Color3.fromRGB(0,200,120)
+		Glow.Thickness = 2
+	else
+		Toggle.Text = "Auto Parry : OFF"
+		Toggle.BackgroundColor3 = Color3.fromRGB(40,40,40)
+		Glow.Thickness = 0
+	end
+end)
+
+--// Drag Mobile
+local dragging, dragStart, startPos
+local function update(input)
+	local delta = input.Position - dragStart
+	Main.Position = UDim2.new(startPos.X.Scale,
+		startPos.X.Offset + delta.X,
+		startPos.Y.Scale,
+		startPos.Y.Offset + delta.Y)
+end
+
+Main.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = Main.Position
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+UIS.InputChanged:Connect(function(input)
+	if dragging and input.UserInputType == Enum.UserInputType.Touch then
+		update(input)
+	end
+end)
+
+--// Open Button
+local Open = Instance.new("TextButton", ScreenGui)
+Open.Size = UDim2.new(0,120,0,45)
+Open.Position = UDim2.new(0,20,0.6,0)
+Open.Text = "Open GUI"
+Open.BackgroundColor3 = Color3.fromRGB(0,200,120)
+Open.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", Open).CornerRadius = UDim.new(0,12)
+
+Open.MouseButton1Click:Connect(function()
+	Main.Visible = true
+	Main.Size = UDim2.new(0,0,0,0)
+	TweenService:Create(Main,TweenInfo.new(0.3),
+		{Size = UDim2.new(0,360,0,260)}):Play()
+end)
+
+Close.MouseButton1Click:Connect(function()
+	Main.Visible = false
+end)
