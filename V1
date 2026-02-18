@@ -1,0 +1,159 @@
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+
+local player = Players.LocalPlayer
+
+-- GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "ThangProUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+-- NÚT MỞ
+local openBtn = Instance.new("TextButton")
+openBtn.Size = UDim2.new(0,120,0,45)
+openBtn.Position = UDim2.new(0,20,0,20)
+openBtn.Text = "MỞ MENU"
+openBtn.BackgroundColor3 = Color3.fromRGB(0,170,255)
+openBtn.TextColor3 = Color3.new(1,1,1)
+openBtn.Font = Enum.Font.GothamBold
+openBtn.TextSize = 16
+openBtn.Parent = screenGui
+Instance.new("UICorner",openBtn).CornerRadius = UDim.new(0,12)
+
+-- FRAME CHÍNH
+local main = Instance.new("Frame")
+main.Size = UDim2.new(0,0,0,0)
+main.Position = UDim2.new(0.5,-175,0.5,-225)
+main.BackgroundColor3 = Color3.fromRGB(25,25,25)
+main.Visible = false
+main.Active = true
+main.Draggable = true
+main.Parent = screenGui
+Instance.new("UICorner",main).CornerRadius = UDim.new(0,15)
+
+-- SHADOW EFFECT
+local stroke = Instance.new("UIStroke")
+stroke.Color = Color3.fromRGB(0,170,255)
+stroke.Thickness = 2
+stroke.Parent = main
+
+-- HEADER
+local header = Instance.new("Frame")
+header.Size = UDim2.new(1,0,0,50)
+header.BackgroundColor3 = Color3.fromRGB(35,35,35)
+header.Parent = main
+Instance.new("UICorner",header).CornerRadius = UDim.new(0,15)
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1,0,1,0)
+title.BackgroundTransparency = 1
+title.Text = "🔥 GUI CỦA THẮNG 🔥"
+title.TextColor3 = Color3.new(1,1,1)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 18
+title.Parent = header
+
+-- NÚT ĐÓNG
+local close = Instance.new("TextButton")
+close.Size = UDim2.new(0,40,0,40)
+close.Position = UDim2.new(1,-45,0,5)
+close.Text = "X"
+close.BackgroundColor3 = Color3.fromRGB(255,60,60)
+close.TextColor3 = Color3.new(1,1,1)
+close.Font = Enum.Font.GothamBold
+close.TextSize = 20
+close.Parent = header
+Instance.new("UICorner",close).CornerRadius = UDim.new(0,10)
+
+-- TAB BUTTONS
+local tabBar = Instance.new("Frame")
+tabBar.Size = UDim2.new(1,0,0,45)
+tabBar.Position = UDim2.new(0,0,0,50)
+tabBar.BackgroundTransparency = 1
+tabBar.Parent = main
+
+local pages = {}
+local currentPage = nil
+
+local function createTab(name,pos)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0.5,-5,1,0)
+    btn.Position = UDim2.new(pos,0,0,0)
+    btn.Text = name
+    btn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Font = Enum.Font.GothamSemibold
+    btn.TextSize = 15
+    btn.Parent = tabBar
+    Instance.new("UICorner",btn).CornerRadius = UDim.new(0,10)
+
+    local page = Instance.new("Frame")
+    page.Size = UDim2.new(1,-20,1,-110)
+    page.Position = UDim2.new(0,10,0,105)
+    page.BackgroundTransparency = 1
+    page.Visible = false
+    page.Parent = main
+
+    pages[name] = page
+
+    btn.MouseButton1Click:Connect(function()
+        for _,p in pairs(pages) do
+            p.Visible = false
+        end
+        page.Visible = true
+        currentPage = name
+    end)
+
+    return page
+end
+
+-- TẠO TAB
+local combatPage = createTab("Combat",0)
+local miscPage = createTab("Misc",0.5)
+
+pages["Combat"].Visible = true
+
+-- TOGGLE MẪU
+local function createToggle(parent,text)
+    local toggle = Instance.new("TextButton")
+    toggle.Size = UDim2.new(1,0,0,50)
+    toggle.BackgroundColor3 = Color3.fromRGB(70,70,80)
+    toggle.TextColor3 = Color3.new(1,1,1)
+    toggle.Font = Enum.Font.GothamSemibold
+    toggle.TextSize = 16
+    toggle.Text = text.." : OFF"
+    toggle.Parent = parent
+    Instance.new("UICorner",toggle).CornerRadius = UDim.new(0,12)
+
+    local state = false
+    toggle.MouseButton1Click:Connect(function()
+        state = not state
+        toggle.Text = text.." : "..(state and "ON" or "OFF")
+        toggle.BackgroundColor3 = state and Color3.fromRGB(0,200,120) or Color3.fromRGB(70,70,80)
+    end)
+end
+
+createToggle(combatPage,"Skill Boost")
+createToggle(combatPage,"Damage Mode")
+createToggle(miscPage,"Night Mode")
+createToggle(miscPage,"Music Mode")
+
+-- LAYOUT
+for _,page in pairs(pages) do
+    local layout = Instance.new("UIListLayout")
+    layout.Padding = UDim.new(0,10)
+    layout.Parent = page
+end
+
+-- ANIMATION MỞ
+openBtn.MouseButton1Click:Connect(function()
+    main.Visible = true
+    TweenService:Create(main,TweenInfo.new(0.3,Enum.EasingStyle.Back),{
+        Size = UDim2.new(0,350,0,450)
+    }):Play()
+end)
+
+close.MouseButton1Click:Connect(function()
+    main.Visible = false
+end)
