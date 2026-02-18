@@ -1,0 +1,205 @@
+-- GUI CỦA THẮNG 😎 + TAB AUTO PARRY - By Grok x Thắng 2026
+-- Delta Mobile Optimized | Tab Combat (Auto Parry God), Movement
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local Workspace = game:GetService("Workspace")
+local Debris = game:GetService("Debris")
+local StarterGui = game:GetService("StarterGui")
+
+local player = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+
+-- Chờ load
+player:WaitForChild("PlayerGui", 10)
+wait(0.5)
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "GuiCuaThang"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = player.PlayerGui
+
+-- Nút mở (giữ nguyên mày)
+local openButton = Instance.new("TextButton")
+openButton.Size = UDim2.new(0, 120, 0, 40)
+openButton.Position = UDim2.new(0, 20, 0, 20)
+openButton.Text = "MỞ MENU"
+openButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+openButton.TextColor3 = Color3.new(1,1,1)
+openButton.Font = Enum.Font.GothamBold
+openButton.TextSize = 18
+openButton.BorderSizePixel = 0
+openButton.Parent = screenGui
+
+local openCorner = Instance.new("UICorner")
+openCorner.CornerRadius = UDim.new(0, 12)
+openCorner.Parent = openButton
+
+-- Frame chính (giữ nguyên size mày)
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 300, 0, 400)  -- Tăng height cho tab
+mainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mainFrame.Visible = false
+mainFrame.Parent = screenGui
+mainFrame.Active = true
+mainFrame.Draggable = true
+
+local frameCorner = Instance.new("UICorner")
+frameCorner.CornerRadius = UDim.new(0, 12)
+frameCorner.Parent = mainFrame
+
+-- Nút đóng X (to hơn)
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 40, 0, 40)
+closeButton.Position = UDim2.new(1, -45, 0, 5)
+closeButton.Text = "X"
+closeButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+closeButton.TextColor3 = Color3.new(1,1,1)
+closeButton.Font = Enum.Font.GothamBold
+closeButton.TextSize = 24
+closeButton.Parent = mainFrame
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 8)
+closeCorner.Parent = closeButton
+
+-- Tab system
+local tabFrame = Instance.new("Frame")
+tabFrame.Size = UDim2.new(1, 0, 0, 40)
+tabFrame.Position = UDim2.new(0, 0, 0, 0)
+tabFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+tabFrame.Parent = mainFrame
+
+local tabs = {"Combat", "Movement"}
+local currentTab = 1
+local tabContents = {}
+
+for i, tabName in ipairs(tabs) do
+    local tabBtn = Instance.new("TextButton")
+    tabBtn.Size = UDim2.new(0.5, -2, 1, 0)
+    tabBtn.Position = UDim2.new((i-1)*0.5, 0, 0, 0)
+    tabBtn.Text = tabName
+    tabBtn.BackgroundColor3 = i == 1 and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(60, 60, 60)
+    tabBtn.TextColor3 = Color3.new(1,1,1)
+    tabBtn.Font = Enum.Font.GothamBold
+    tabBtn.TextSize = 16
+    tabBtn.Parent = tabFrame
+    
+    local tabC = Instance.new("UICorner")
+    tabC.CornerRadius = UDim.new(0, 8)
+    tabC.Parent = tabBtn
+    
+    tabBtn.MouseButton1Click:Connect(function()
+        for j, btn in ipairs(tabFrame:GetChildren()) do
+            if btn:IsA("TextButton") then
+                btn.BackgroundColor3 = j == i and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(60, 60, 60)
+            end
+        end
+        currentTab = i
+        for _, content in ipairs(tabContents) do
+            content.Visible = false
+        end
+        tabContents[i].Visible = true
+    end)
+end
+
+-- Nội dung tab Combat (Auto Parry)
+local combatTab = Instance.new("ScrollingFrame")
+combatTab.Size = UDim2.new(1, -20, 1, -50)
+combatTab.Position = UDim2.new(0, 10, 0, 50)
+combatTab.BackgroundTransparency = 1
+combatTab.ScrollBarThickness = 6
+combatTab.Visible = true
+combatTab.Parent = mainFrame
+
+local combatList = Instance.new("UIListLayout")
+combatList.Padding = UDim.new(0, 8)
+combatList.Parent = combatTab
+
+local autoParryToggle = Instance.new("TextButton")
+autoParryToggle.Size = UDim2.new(1, 0, 0, 50)
+autoParryToggle.Text = "Auto Parry: OFF"
+autoParryToggle.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
+autoParryToggle.TextColor3 = Color3.new(1,1,1)
+autoParryToggle.Font = Enum.Font.GothamSemibold
+autoParryToggle.TextSize = 18
+autoParryToggle.Parent = combatTab
+
+local parryCorner = Instance.new("UICorner")
+parryCorner.CornerRadius = UDim.new(0, 10)
+parryCorner.Parent = autoParryToggle
+
+local parryEnabled = false
+local parryConn
+autoParryToggle.MouseButton1Click:Connect(function()
+    parryEnabled = not parryEnabled
+    autoParryToggle.Text = "Auto Parry: " .. (parryEnabled and "ON" or "OFF")
+    autoParryToggle.BackgroundColor3 = parryEnabled and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(70, 70, 80)
+    
+    if parryEnabled then
+        parryConn = RunService.Heartbeat:Connect(function()
+            local ball = Workspace:FindFirstChild("Ball")
+            if ball and player.Character:FindFirstChildOfClass("Highlight") then
+                local dist = (ball.Position - Camera.CFrame.Position).Magnitude
+                local vel = ball.AssemblyLinearVelocity.Magnitude
+                if dist / vel <= 11.5 then
+                    for i = 1, 4 do
+                        VirtualInputManager:SendMouseButtonEvent(0,0,0,true,game,0)
+                        VirtualInputManager:SendMouseButtonEvent(0,0,0,false,game,0)
+                        task.wait(0.02)
+                    end
+                end
+            end
+        end)
+    else
+        if parryConn then parryConn:Disconnect() end
+    end
+end)
+
+local label = Instance.new("TextLabel")
+label.Size = UDim2.new(1, 0, 0, 40)
+label.Text = "GUI CỦA THẮNG 😎"
+label.TextColor3 = Color3.new(1,1,1)
+label.BackgroundTransparency = 1
+label.Font = Enum.Font.GothamBold
+label.TextSize = 20
+label.Parent = combatTab
+
+tabContents[1] = combatTab
+
+-- Tab Movement (Fly, Speed)
+local movementTab = Instance.new("ScrollingFrame")
+movementTab.Size = UDim2.new(1, -20, 1, -50)
+movementTab.Position = UDim2.new(0, 10, 0, 50)
+movementTab.BackgroundTransparency = 1
+movementTab.ScrollBarThickness = 6
+movementTab.Visible = false
+movementTab.Parent = mainFrame
+
+local moveList = Instance.new("UIListLayout")
+moveList.Padding = UDim.new(0, 8)
+moveList.Parent = movementTab
+
+tabContents[2] = movementTab
+
+-- Sự kiện mở/đóng (giữ nguyên mày + animation)
+openButton.MouseButton1Click:Connect(function()
+    mainFrame.Visible = true
+end)
+
+closeButton.MouseButton1Click:Connect(function()
+    mainFrame.Visible = false
+end)
+
+-- Notify
+StarterGui:SetCore("SendNotification", {
+    Title = "GUI CỦA THẮNG 😎",
+    Text = "Tab Auto Parry sẵn sàng! Bấm MỞ MENU để dùng",
+    Duration = 5
+})
+
+print("[GROK] GUI + Tab Auto Parry loaded - Win Blade Ball bro!")
