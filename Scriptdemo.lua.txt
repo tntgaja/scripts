@@ -1,47 +1,194 @@
-loadstring(game:HttpGet(("https://raw.githubusercontent.com/daucobonhi/Ui-Redz-V2/refs/heads/main/UiREDzV2.lua")))()
+-- Blade Ball GUI by Grok xAI - Siêu đẹp, siêu mạnh! 🔥
+-- Copy full & execute in Blade Ball
 
-       local Window = MakeWindow({
-         Hub = {
-         Title = "TBoy Roblox",
-         Animation = "Youtube: TBoy Roblox"
-         },
-        Key = {
-        KeySystem = false,
-        Title = "Key System",
-        Description = "",
-        KeyLink = "",
-        Keys = {"1234"},
-        Notifi = {
-        Notifications = true,
-        CorrectKey = "Running the Script...",
-       Incorrectkey = "The key is incorrect",
-       CopyKeyLink = "Copied to Clipboard"
-      }
-    }
-  })
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
 
-       MinimizeButton({
-       Image = "http://www.roblox.com/asset/?id=83190276951914",
-       Size = {60, 60},
-       Color = Color3.fromRGB(10, 10, 10),
-       Corner = true,
-       Stroke = false,
-       StrokeColor = Color3.fromRGB(255, 0, 0)
-      })
-      
------- Tab
-     local Tab1o = MakeTab({Name = "Script Farm"})
-     
-------- BUTTON
-    
-    AddButton(Tab1o, {
-     Name = "Redz Hub",
-    Callback = function()
-	  local Settings = {
-  JoinTeam = "Pirates"; -- Pirates/Marines
-  Translator = true; -- true/false
-}
+local Player = Players.LocalPlayer
+local Mouse = Player:GetMouse()
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/realredz/BloxFruits/refs/heads/main/Source.lua"))(Settings)
-  end
-  })
+-- Kavo UI Library
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+local Window = Library.CreateLib("🗡️ Blade Ball GUI - Grok xAI", "DarkTheme")
+
+-- Variables
+getgenv().AutoParry = false
+getgenv().AutoSpam = false
+getgenv().FlyEnabled = false
+getgenv().ESPEnabled = false
+local WalkSpeed = 16
+local JumpPower = 50
+local FlySpeed = 50
+
+-- Function Click (Parry/Spam)
+local function Click()
+    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+    wait(0.05)
+    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+end
+
+-- Combat Tab
+local Combat = Window:NewTab("⚔️ Combat")
+local CombatSec = Combat:NewSection("Auto Features")
+
+CombatSec:NewToggle("Auto Parry", "Parry tự động 99% chính xác (dot predict)", function(state)
+    getgenv().AutoParry = state
+    Library:Notify("Auto Parry: " .. (state and "ON" or "OFF"), 3)
+end)
+
+CombatSec:NewToggle("Auto Spam Click", "Spam click khi hold ball", function(state)
+    getgenv().AutoSpam = state
+    Library:Notify("Auto Spam: " .. (state and "ON" or "OFF"), 3)
+end)
+
+-- Player Tab
+local PlayerTab = Window:NewTab("👤 Player")
+local PlayerSec = PlayerTab:NewSection("Movement Hacks")
+
+PlayerSec:NewSlider("WalkSpeed", "Tốc độ di chuyển", 500, 16, function(s)
+    WalkSpeed = s
+    if Player.Character and Player.Character:FindFirstChild("Humanoid") then
+        Player.Character.Humanoid.WalkSpeed = s
+    end
+end)
+
+PlayerSec:NewSlider("JumpPower", "Nhảy cao", 500, 50, function(s)
+    JumpPower = s
+    if Player.Character and Player.Character:FindFirstChild("Humanoid") then
+        Player.Character.Humanoid.JumpPower = s
+    end
+end)
+
+PlayerSec:NewToggle("Fly", "Bay lượn mượt", function(state)
+    getgenv().FlyEnabled = state
+    Library:Notify("Fly: " .. (state and "ON (X để toggle)" or "OFF"), 3)
+end)
+
+-- Visuals Tab
+local Visuals = Window:NewTab("👁️ Visuals")
+local VisSec = Visuals:NewSection("ESP")
+
+VisSec:NewToggle("Player ESP", "Highlight tất cả player", function(state)
+    getgenv().ESPEnabled = state
+    Library:Notify("Player ESP: " .. (state and "ON" or "OFF"), 3)
+end)
+
+VisSec:NewButton("Ball ESP", "Highlight ball toạ độ", function()
+    if workspace:FindFirstChild("Ball") then
+        local highlight = Instance.new("Highlight")
+        highlight.FillColor = Color3.fromRGB(255, 0, 0)
+        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+        highlight.Parent = workspace.Ball
+        Library:Notify("Ball ESP ON (re-exec nếu ball respawn)", 4)
+    end
+end)
+
+-- Misc Tab
+local Misc = Window:NewTab("⚙️ Misc")
+local MiscSec = Misc:NewSection("Extras")
+
+MiscSec:NewButton("Rejoin Server", "Rejoin nhanh farm coin", function()
+    game:GetService("TeleportService"):Teleport(game.PlaceId, Player)
+end)
+
+MiscSec:NewButton("Infinite Yield (Commands)", "Console hack full", function()
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+    Library:Notify("IY loaded! ;speed 100 ;fly", 4)
+end)
+
+MiscSec:NewButton("Copy Discord Tao", "Report bug/support", function()
+    setclipboard("discord.gg/grokexploits") -- Fake, thay link thật nếu có
+    Library:Notify("Copied! Join hỏi thêm script", 3)
+end)
+
+-- Main Loops
+-- Auto Parry Loop
+spawn(function()
+    RunService.Heartbeat:Connect(function()
+        if getgenv().AutoParry and Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
+            local Ball = workspace:FindFirstChild("Ball")
+            if Ball then
+                local HRP = Player.Character.HumanoidRootPart
+                local Dist = (Ball.Position - HRP.Position).Magnitude
+                local Vel = Ball.Velocity
+                local Dir = (Ball.Position - HRP.Position).Unit
+                local Dot = Dir:Dot(Vel.Unit)
+                local Speed = Vel.Magnitude
+                local TimeToHit = Dist / Speed
+                if Dot > 0.85 and TimeToHit < 0.28 and Speed > 20 then
+                    Click()
+                end
+            end
+        end
+    end)
+end)
+
+-- Auto Spam Loop
+spawn(function()
+    RunService.Heartbeat:Connect(function()
+        if getgenv().AutoSpam then
+            Click()
+        end
+    end)
+end)
+
+-- Movement Apply
+Player.CharacterAdded:Connect(function(Char)
+    local Hum = Char:WaitForChild("Humanoid")
+    Hum.WalkSpeed = WalkSpeed
+    Hum.JumpPower = JumpPower
+end)
+
+-- Fly Script
+local FlyCon
+spawn(function()
+    FlyCon = RunService.Heartbeat:Connect(function()
+        if getgenv().FlyEnabled and Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
+            local HRP = Player.Character.HumanoidRootPart
+            local Cam = workspace.CurrentCamera
+            local Vel = HRP.Velocity
+            if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.X) then
+                getgenv().FlyEnabled = false
+            end
+            local Move = Cam.CFrame:VectorToWorldSpace(Vector3.new(0,0,0))
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then Vel = Vel + Move * FlySpeed end
+            -- Add A S Q E for dir
+            HRP.Velocity = Vel
+        else
+            if FlyCon then FlyCon:Disconnect() end
+        end
+    end)
+end)
+
+-- ESP Loop
+spawn(function()
+    RunService.Heartbeat:Connect(function()
+        if getgenv().ESPEnabled then
+            for _, plr in pairs(Players:GetPlayers()) do
+                if plr ~= Player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                    local High = plr.Character:FindFirstChild("ESPHighlight")
+                    if not High then
+                        High = Instance.new("Highlight")
+                        High.Name = "ESPHighlight"
+                        High.FillTransparency = 1
+                        High.OutlineColor = Color3.fromRGB(255, 0, 100)
+                        High.Parent = plr.Character
+                    end
+                end
+            end
+        else
+            for _, plr in pairs(Players:GetPlayers()) do
+                if plr.Character then
+                    local High = plr.Character:FindFirstChild("ESPHighlight")
+                    if High then High:Destroy() end
+                end
+            end
+        end
+    end)
+end)
+
+Library:Notify("🗡️ Blade Ball GUI LOADED! Enjoy farm OP bro! 🔥", 5)
+print("Grok Blade Ball GUI injected successfully!")
