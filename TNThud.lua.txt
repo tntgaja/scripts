@@ -1,176 +1,224 @@
--- Pure GUI Base 2026 - No Functions, Just Beautiful Interface
--- Nhấn INSERT để mở/đóng | Kéo thả title bar để di chuyển
+-- Pure GUI 2026 - Có minimize + maximize button | Thu gọn thành bar + phóng to lại
+-- Nhấn INSERT toggle toàn bộ | Click - để minimize, □ để maximize/restore
 
-getgenv().PureGUI = {}  -- chỉ để tránh conflict, không lưu gì cả
+getgenv().PureGUI = {}
 
-local Players          = game:GetService("Players")
 local TweenService     = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui          = game:GetService("CoreGui")
 
-local player = Players.LocalPlayer
-
 -- ScreenGui
 local sg = Instance.new("ScreenGui")
-sg.Name = "PureModernGUI"
+sg.Name = "PureGUI_MinMax"
 sg.ResetOnSpawn = false
 sg.Parent = CoreGui
 
 -- Main Frame
 local main = Instance.new("Frame")
-main.Name = "MainFrame"
+main.Name = "Main"
 main.Parent = sg
-main.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
-main.Position = UDim2.new(0.5, -240, 0.5, -180)
-main.Size = UDim2.new(0, 480, 0, 360)
+main.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
+main.Position = UDim2.new(0.5, -260, 0.5, -200)
+main.Size = UDim2.new(0, 520, 0, 400)
 main.ClipsDescendants = true
 main.Visible = false
 
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 16)
-corner.Parent = main
+local uicorner = Instance.new("UICorner", main)
+uicorner.CornerRadius = UDim.new(0, 14)
 
-local stroke = Instance.new("UIStroke")
-stroke.Color = Color3.fromRGB(90, 160, 255)
-stroke.Thickness = 2.2
-stroke.Transparency = 0.35
-stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-stroke.Parent = main
+local uistroke = Instance.new("UIStroke", main)
+uistroke.Color = Color3.fromRGB(60, 140, 255)
+uistroke.Thickness = 2
+uistroke.Transparency = 0.4
 
-local gradient = Instance.new("UIGradient")
+local gradient = Instance.new("UIGradient", main)
 gradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(28, 28, 42)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(20, 20, 32)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(12, 12, 22))
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(25,25,38)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(10,10,20))
 }
 gradient.Rotation = 90
-gradient.Parent = main
 
 -- Title Bar
 local titlebar = Instance.new("Frame")
+titlebar.Name = "TitleBar"
 titlebar.Parent = main
-titlebar.Size = UDim2.new(1, 0, 0, 42)
-titlebar.BackgroundTransparency = 1
+titlebar.Size = UDim2.new(1, 0, 0, 48)
+titlebar.BackgroundColor3 = Color3.fromRGB(18, 18, 28)
+titlebar.BorderSizePixel = 0
 
-local title = Instance.new("TextLabel")
-title.Parent = titlebar
-title.Size = UDim2.new(1, -90, 1, 0)
-title.Position = UDim2.new(0, 18, 0, 0)
-title.BackgroundTransparency = 1
-title.Font = Enum.Font.GothamBlack
-title.Text = "PURE GUI"
-title.TextColor3 = Color3.fromRGB(210, 220, 255)
-title.TextSize = 18
-title.TextXAlignment = Enum.TextXAlignment.Left
-title.TextTransparency = 0.1
+local titlecorner = Instance.new("UICorner", titlebar)
+titlecorner.CornerRadius = UDim.new(0, 14)
 
-local subtitle = Instance.new("TextLabel")
-subtitle.Parent = titlebar
-subtitle.Size = UDim2.new(1, -90, 0, 16)
-subtitle.Position = UDim2.new(0, 18, 0, 22)
+local titlestroke = Instance.new("UIStroke", titlebar)
+titlestroke.Color = Color3.fromRGB(60, 140, 255)
+titlestroke.Thickness = 1.5
+titlestroke.Transparency = 0.5
+
+-- Icon ninja
+local icon = Instance.new("ImageLabel", titlebar)
+icon.Size = UDim2.new(0, 36, 0, 36)
+icon.Position = UDim2.new(0, 16, 0.5, -18)
+icon.BackgroundTransparency = 1
+icon.Image = "rbxassetid://13412124013"  -- ninja icon, thay nếu muốn
+icon.ScaleType = Enum.ScaleType.Fit
+
+-- Title text
+local titletext = Instance.new("TextLabel", titlebar)
+titletext.Size = UDim2.new(1, -180, 1, 0)
+titletext.Position = UDim2.new(0, 70, 0, 0)
+titletext.BackgroundTransparency = 1
+titletext.Font = Enum.Font.GothamBold
+titletext.Text = "PURE GUI"
+titletext.TextColor3 = Color3.fromRGB(200, 220, 255)
+titletext.TextSize = 18
+titletext.TextXAlignment = Enum.TextXAlignment.Left
+
+local subtitle = Instance.new("TextLabel", titlebar)
+subtitle.Size = UDim2.new(1, -180, 0, 14)
+subtitle.Position = UDim2.new(0, 70, 0, 26)
 subtitle.BackgroundTransparency = 1
 subtitle.Font = Enum.Font.Gotham
 subtitle.Text = "beautiful • clean • 2026"
-subtitle.TextColor3 = Color3.fromRGB(140, 160, 220)
+subtitle.TextColor3 = Color3.fromRGB(120, 150, 220)
 subtitle.TextSize = 12
 subtitle.TextXAlignment = Enum.TextXAlignment.Left
 
-local close = Instance.new("TextButton")
-close.Parent = titlebar
-close.Size = UDim2.new(0, 32, 0, 32)
-close.Position = UDim2.new(1, -42, 0.5, -16)
-close.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-close.Text = "×"
-close.TextColor3 = Color3.new(1,1,1)
-close.Font = Enum.Font.GothamBold
-close.TextSize = 22
-close.AutoButtonColor = false
+-- Minimize button (-)
+local minbtn = Instance.new("TextButton", titlebar)
+minbtn.Name = "MinBtn"
+minbtn.Size = UDim2.new(0, 34, 0, 34)
+minbtn.Position = UDim2.new(1, -80, 0.5, -17)
+minbtn.BackgroundTransparency = 1
+minbtn.Text = "-"
+minbtn.Font = Enum.Font.GothamBold
+minbtn.TextColor3 = Color3.fromRGB(180, 180, 255)
+minbtn.TextSize = 24
 
-local closecorner = Instance.new("UICorner", close)
+-- Maximize/Restore button (□)
+local maxbtn = Instance.new("TextButton", titlebar)
+maxbtn.Name = "MaxBtn"
+maxbtn.Size = UDim2.new(0, 34, 0, 34)
+maxbtn.Position = UDim2.new(1, -120, 0.5, -17)
+maxbtn.BackgroundTransparency = 1
+maxbtn.Text = "□"
+maxbtn.Font = Enum.Font.GothamBold
+maxbtn.TextColor3 = Color3.fromRGB(180, 180, 255)
+maxbtn.TextSize = 20
+
+-- Close button (×)
+local closebtn = Instance.new("TextButton", titlebar)
+closebtn.Size = UDim2.new(0, 34, 0, 34)
+closebtn.Position = UDim2.new(1, -40, 0.5, -17)
+closebtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+closebtn.Text = "×"
+closebtn.Font = Enum.Font.GothamBold
+closebtn.TextColor3 = Color3.new(1,1,1)
+closebtn.TextSize = 22
+
+local closecorner = Instance.new("UICorner", closebtn)
 closecorner.CornerRadius = UDim.new(0, 10)
 
--- Content Area (chỉ để trang trí)
-local content = Instance.new("Frame")
-content.Parent = main
+-- Content (ẩn khi minimize)
+local content = Instance.new("Frame", main)
+content.Name = "Content"
 content.Size = UDim2.new(1, -24, 1, -66)
-content.Position = UDim2.new(0, 12, 0, 54)
+content.Position = UDim2.new(0, 12, 0, 60)
 content.BackgroundTransparency = 1
 
--- Một số phần trang trí giả (không chức năng)
-local deco1 = Instance.new("Frame", content)
-deco1.Size = UDim2.new(1, 0, 0, 80)
-deco1.Position = UDim2.new(0, 0, 0, 0)
-deco1.BackgroundColor3 = Color3.fromRGB(25, 25, 38)
-deco1.BackgroundTransparency = 0.4
-Instance.new("UICorner", deco1).CornerRadius = UDim.new(0, 12)
+-- Trang trí 2 panel
+for i = 1, 2 do
+    local panel = Instance.new("Frame", content)
+    panel.Size = UDim2.new(0.48, 0, 1, 0)
+    panel.Position = UDim2.new((i-1)*0.52, 0, 0, 0)
+    panel.BackgroundColor3 = Color3.fromRGB(22, 22, 32)
+    panel.BackgroundTransparency = 0.6
+    Instance.new("UICorner", panel).CornerRadius = UDim.new(0, 12)
+    Instance.new("UIStroke", panel).Color = Color3.fromRGB(50, 50, 80)
+end
 
-local deco2 = Instance.new("Frame", content)
-deco2.Size = UDim2.new(0.48, 0, 1, -90)
-deco2.Position = UDim2.new(0, 0, 0, 90)
-deco2.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
-deco2.BackgroundTransparency = 0.5
-Instance.new("UICorner", deco2).CornerRadius = UDim.new(0, 12)
+-- Biến trạng thái
+local minimized = false
+local fullSize = main.Size
+local fullPos = main.Position
 
-local deco3 = Instance.new("Frame", content)
-deco3.Size = UDim2.new(0.48, 0, 1, -90)
-deco3.Position = UDim2.new(0.52, 4, 0, 90)
-deco3.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
-deco3.BackgroundTransparency = 0.5
-Instance.new("UICorner", deco3).CornerRadius = UDim.new(0, 12)
+-- Hàm toggle minimize / maximize
+local function toggleMinimize()
+    minimized = not minimized
+    
+    if minimized then
+        -- Thu gọn thành bar ngang
+        TweenService:Create(main, TweenInfo.new(0.4, Enum.EasingStyle.Back), {
+            Size = UDim2.new(0, 420, 0, 48),
+            Position = UDim2.new(0.5, -210, 0.1, 0)
+        }):Play()
+        content.Visible = false
+        minbtn.Text = "+"
+        maxbtn.Text = "□"  -- vẫn giữ □ để phóng to lại
+        titlebar.Size = UDim2.new(1,0,1,0)
+    else
+        -- Phóng to full
+        TweenService:Create(main, TweenInfo.new(0.4, Enum.EasingStyle.Back), {
+            Size = fullSize,
+            Position = fullPos
+        }):Play()
+        task.delay(0.3, function() content.Visible = true end)
+        minbtn.Text = "-"
+        maxbtn.Text = "□"
+        titlebar.Size = UDim2.new(1,0,0,48)
+    end
+end
 
--- Draggable
+-- Kéo thả
 local dragging, dragStart, startPos
-titlebar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+titlebar.InputBegan:Connect(function(inp)
+    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
         dragging = true
-        dragStart = input.Position
+        dragStart = inp.Position
         startPos = main.Position
-        
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
     end
 end)
 
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStart
-        main.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
+UserInputService.InputChanged:Connect(function(inp)
+    if dragging and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
+        local delta = inp.Position - dragStart
+        main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
 end)
 
--- Close button
-close.MouseButton1Click:Connect(function()
+UserInputService.InputEnded:Connect(function(inp)
+    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
+
+-- Events
+minbtn.MouseButton1Click:Connect(toggleMinimize)
+maxbtn.MouseButton1Click:Connect(toggleMinimize)  -- cả hai nút đều toggle minimize/restore
+closebtn.MouseButton1Click:Connect(function()
     sg:Destroy()
     getgenv().PureGUI = nil
-    print("Pure GUI đã được gỡ")
 end)
 
--- Toggle bằng INSERT
-UserInputService.InputBegan:Connect(function(input, gp)
+-- Click bar khi minimized để mở lại full
+titlebar.MouseButton1Click:Connect(function()
+    if minimized then toggleMinimize() end
+end)
+
+-- Toggle GUI bằng INSERT
+UserInputService.InputBegan:Connect(function(inp, gp)
     if gp then return end
-    if input.KeyCode == Enum.KeyCode.Insert then
+    if inp.KeyCode == Enum.KeyCode.Insert then
         main.Visible = not main.Visible
     end
 end)
 
--- Animation mở GUI
-main.Size = UDim2.new(0, 0, 0, 0)
-main.Position = UDim2.new(0.5, 0, 0.5, 0)
-TweenService:Create(main, TweenInfo.new(0.65, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-    Size = UDim2.new(0, 480, 0, 360),
-    Position = UDim2.new(0.5, -240, 0.5, -180)
+-- Animation mở đầu
+main.Size = UDim2.new(0,0,0,0)
+main.Position = UDim2.new(0.5,0,0.5,0)
+TweenService:Create(main, TweenInfo.new(0.6, Enum.EasingStyle.Back), {
+    Size = fullSize,
+    Position = fullPos
 }):Play()
+task.delay(0.15, function() main.Visible = true end)
 
-task.delay(0.1, function()
-    main.Visible = true
-end)
-
-print("Pure GUI loaded! Nhấn INSERT để mở/đóng | Chỉ giao diện, không chức năng")
+print("Pure GUI với nút phóng to/thu nhỏ loaded! INSERT toggle | - hoặc □ để minimize/maximize")
