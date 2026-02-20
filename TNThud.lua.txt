@@ -1,5 +1,4 @@
--- TNThud Pro - Redz Style UI
--- Clean Professional Layout
+-- TNThud MAX - Ultra Large Professional Hub
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -7,79 +6,85 @@ local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
 
--- Remove old GUI
-if player.PlayerGui:FindFirstChild("TNThudPro") then
-    player.PlayerGui.TNThudPro:Destroy()
+-- Remove old
+if player.PlayerGui:FindFirstChild("TNThudMAX") then
+    player.PlayerGui.TNThudMAX:Destroy()
 end
 
 -- GUI
 local gui = Instance.new("ScreenGui")
-gui.Name = "TNThudPro"
+gui.Name = "TNThudMAX"
 gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
--- Main Frame
+-- MAIN (BIGGER)
 local main = Instance.new("Frame")
-main.Size = UDim2.new(0,500,0,350)
-main.Position = UDim2.new(0.5,-250,0.5,-175)
-main.BackgroundColor3 = Color3.fromRGB(18,18,18)
+main.Size = UDim2.new(0,700,0,480)
+main.Position = UDim2.new(0.5,-350,0.5,-240)
+main.BackgroundColor3 = Color3.fromRGB(15,15,15)
 main.Active = true
 main.Draggable = true
 main.Parent = gui
-Instance.new("UICorner", main).CornerRadius = UDim.new(0,18)
+Instance.new("UICorner", main).CornerRadius = UDim.new(0,22)
+
+-- RGB Border
+local stroke = Instance.new("UIStroke")
+stroke.Thickness = 4
+stroke.Parent = main
 
 -- RGB Top Bar
 local topBar = Instance.new("Frame")
-topBar.Size = UDim2.new(1,0,0,5)
-topBar.BackgroundColor3 = Color3.fromRGB(255,0,0)
+topBar.Size = UDim2.new(1,0,0,6)
 topBar.Parent = main
-Instance.new("UICorner", topBar).CornerRadius = UDim.new(0,18)
+Instance.new("UICorner", topBar).CornerRadius = UDim.new(0,22)
 
 local hue = 0
 RunService.RenderStepped:Connect(function()
     hue += 0.002
     if hue > 1 then hue = 0 end
-    topBar.BackgroundColor3 = Color3.fromHSV(hue,1,1)
+    local color = Color3.fromHSV(hue,1,1)
+    stroke.Color = color
+    topBar.BackgroundColor3 = color
 end)
 
--- Title
+-- TITLE
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1,0,0,50)
+title.Size = UDim2.new(1,0,0,60)
 title.Position = UDim2.new(0,0,0,10)
 title.BackgroundTransparency = 1
-title.Text = "TNThud Pro Hub"
+title.Text = "TNThud MAX HUB"
 title.TextColor3 = Color3.fromRGB(255,255,255)
 title.TextScaled = true
 title.Parent = main
 
--- Sidebar
+-- SIDEBAR (WIDER)
 local sidebar = Instance.new("Frame")
-sidebar.Size = UDim2.new(0,150,1,-60)
-sidebar.Position = UDim2.new(0,0,0,60)
-sidebar.BackgroundColor3 = Color3.fromRGB(22,22,22)
+sidebar.Size = UDim2.new(0,200,1,-80)
+sidebar.Position = UDim2.new(0,10,0,70)
+sidebar.BackgroundColor3 = Color3.fromRGB(20,20,20)
 sidebar.Parent = main
-Instance.new("UICorner", sidebar).CornerRadius = UDim.new(0,15)
+Instance.new("UICorner", sidebar).CornerRadius = UDim.new(0,18)
 
--- Content Area
+-- CONTENT
 local content = Instance.new("Frame")
-content.Size = UDim2.new(1,-170,1,-70)
-content.Position = UDim2.new(0,160,0,60)
+content.Size = UDim2.new(1,-230,1,-90)
+content.Position = UDim2.new(0,220,0,75)
 content.BackgroundTransparency = 1
 content.Parent = main
 
--- Tab System
 local currentTab = nil
 
+-- TAB FUNCTION
 local function createTab(name,order)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1,-20,0,45)
-    btn.Position = UDim2.new(0,10,0,(order-1)*55+10)
+    btn.Size = UDim2.new(1,-20,0,55)
+    btn.Position = UDim2.new(0,10,0,(order-1)*65+15)
     btn.BackgroundColor3 = Color3.fromRGB(30,30,30)
     btn.Text = name
     btn.TextColor3 = Color3.fromRGB(255,255,255)
     btn.TextScaled = true
     btn.Parent = sidebar
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,10)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,14)
 
     local page = Instance.new("Frame")
     page.Size = UDim2.new(1,0,1,0)
@@ -93,7 +98,7 @@ local function createTab(name,order)
         end
         page.Visible = true
         currentTab = page
-
+        
         TweenService:Create(btn,TweenInfo.new(0.2),{
             BackgroundColor3 = Color3.fromRGB(45,45,45)
         }):Play()
@@ -102,25 +107,26 @@ local function createTab(name,order)
     return page
 end
 
--- Create Tabs
+-- CREATE TABS
 local mainTab = createTab("Main",1)
 local settingsTab = createTab("Settings",2)
-local infoTab = createTab("Info",3)
+local visualTab = createTab("Visual",3)
+local infoTab = createTab("Info",4)
 
 mainTab.Visible = true
 currentTab = mainTab
 
--- Professional Button
+-- PROFESSIONAL BUTTON
 local function createButton(parent,text,posY)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.9,0,0,50)
+    btn.Size = UDim2.new(0.9,0,0,65)
     btn.Position = UDim2.new(0.05,0,0,posY)
-    btn.BackgroundColor3 = Color3.fromRGB(28,28,28)
+    btn.BackgroundColor3 = Color3.fromRGB(25,25,25)
     btn.Text = text
     btn.TextColor3 = Color3.fromRGB(255,255,255)
     btn.TextScaled = true
     btn.Parent = parent
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,12)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,16)
 
     btn.MouseEnter:Connect(function()
         TweenService:Create(btn,TweenInfo.new(0.15),{
@@ -130,20 +136,20 @@ local function createButton(parent,text,posY)
 
     btn.MouseLeave:Connect(function()
         TweenService:Create(btn,TweenInfo.new(0.15),{
-            BackgroundColor3 = Color3.fromRGB(28,28,28)
+            BackgroundColor3 = Color3.fromRGB(25,25,25)
         }):Play()
     end)
 end
 
--- Add sample content
-createButton(mainTab,"Start Function",10)
-createButton(mainTab,"Enable Feature",70)
-createButton(settingsTab,"Reset Settings",10)
+-- SAMPLE CONTENT
+createButton(mainTab,"Start Feature",20)
+createButton(mainTab,"Enable Boost",100)
+createButton(settingsTab,"Reset Settings",20)
 
-local infoLabel = Instance.new("TextLabel")
-infoLabel.Size = UDim2.new(1,0,0,100)
-infoLabel.BackgroundTransparency = 1
-infoLabel.Text = "TNThud Pro UI\nProfessional Redz Style Layout"
-infoLabel.TextColor3 = Color3.fromRGB(200,200,200)
-infoLabel.TextScaled = true
-infoLabel.Parent = infoTab
+local info = Instance.new("TextLabel")
+info.Size = UDim2.new(1,0,0,120)
+info.BackgroundTransparency = 1
+info.Text = "TNThud MAX\nUltra Professional Layout\nLarge Scale Hub Design"
+info.TextColor3 = Color3.fromRGB(200,200,200)
+info.TextScaled = true
+info.Parent = infoTab
