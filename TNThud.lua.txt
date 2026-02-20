@@ -1,155 +1,176 @@
--- TNThud MAX - Ultra Large Professional Hub
+-- Pure GUI Base 2026 - No Functions, Just Beautiful Interface
+-- Nhấn INSERT để mở/đóng | Kéo thả title bar để di chuyển
 
-local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
+getgenv().PureGUI = {}  -- chỉ để tránh conflict, không lưu gì cả
+
+local Players          = game:GetService("Players")
+local TweenService     = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local CoreGui          = game:GetService("CoreGui")
 
 local player = Players.LocalPlayer
 
--- Remove old
-if player.PlayerGui:FindFirstChild("TNThudMAX") then
-    player.PlayerGui.TNThudMAX:Destroy()
-end
+-- ScreenGui
+local sg = Instance.new("ScreenGui")
+sg.Name = "PureModernGUI"
+sg.ResetOnSpawn = false
+sg.Parent = CoreGui
 
--- GUI
-local gui = Instance.new("ScreenGui")
-gui.Name = "TNThudMAX"
-gui.ResetOnSpawn = false
-gui.Parent = player:WaitForChild("PlayerGui")
-
--- MAIN (BIGGER)
+-- Main Frame
 local main = Instance.new("Frame")
-main.Size = UDim2.new(0,700,0,480)
-main.Position = UDim2.new(0.5,-350,0.5,-240)
-main.BackgroundColor3 = Color3.fromRGB(15,15,15)
-main.Active = true
-main.Draggable = true
-main.Parent = gui
-Instance.new("UICorner", main).CornerRadius = UDim.new(0,22)
+main.Name = "MainFrame"
+main.Parent = sg
+main.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
+main.Position = UDim2.new(0.5, -240, 0.5, -180)
+main.Size = UDim2.new(0, 480, 0, 360)
+main.ClipsDescendants = true
+main.Visible = false
 
--- RGB Border
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 16)
+corner.Parent = main
+
 local stroke = Instance.new("UIStroke")
-stroke.Thickness = 4
+stroke.Color = Color3.fromRGB(90, 160, 255)
+stroke.Thickness = 2.2
+stroke.Transparency = 0.35
+stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 stroke.Parent = main
 
--- RGB Top Bar
-local topBar = Instance.new("Frame")
-topBar.Size = UDim2.new(1,0,0,6)
-topBar.Parent = main
-Instance.new("UICorner", topBar).CornerRadius = UDim.new(0,22)
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(28, 28, 42)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(20, 20, 32)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(12, 12, 22))
+}
+gradient.Rotation = 90
+gradient.Parent = main
 
-local hue = 0
-RunService.RenderStepped:Connect(function()
-    hue += 0.002
-    if hue > 1 then hue = 0 end
-    local color = Color3.fromHSV(hue,1,1)
-    stroke.Color = color
-    topBar.BackgroundColor3 = color
+-- Title Bar
+local titlebar = Instance.new("Frame")
+titlebar.Parent = main
+titlebar.Size = UDim2.new(1, 0, 0, 42)
+titlebar.BackgroundTransparency = 1
+
+local title = Instance.new("TextLabel")
+title.Parent = titlebar
+title.Size = UDim2.new(1, -90, 1, 0)
+title.Position = UDim2.new(0, 18, 0, 0)
+title.BackgroundTransparency = 1
+title.Font = Enum.Font.GothamBlack
+title.Text = "PURE GUI"
+title.TextColor3 = Color3.fromRGB(210, 220, 255)
+title.TextSize = 18
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.TextTransparency = 0.1
+
+local subtitle = Instance.new("TextLabel")
+subtitle.Parent = titlebar
+subtitle.Size = UDim2.new(1, -90, 0, 16)
+subtitle.Position = UDim2.new(0, 18, 0, 22)
+subtitle.BackgroundTransparency = 1
+subtitle.Font = Enum.Font.Gotham
+subtitle.Text = "beautiful • clean • 2026"
+subtitle.TextColor3 = Color3.fromRGB(140, 160, 220)
+subtitle.TextSize = 12
+subtitle.TextXAlignment = Enum.TextXAlignment.Left
+
+local close = Instance.new("TextButton")
+close.Parent = titlebar
+close.Size = UDim2.new(0, 32, 0, 32)
+close.Position = UDim2.new(1, -42, 0.5, -16)
+close.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+close.Text = "×"
+close.TextColor3 = Color3.new(1,1,1)
+close.Font = Enum.Font.GothamBold
+close.TextSize = 22
+close.AutoButtonColor = false
+
+local closecorner = Instance.new("UICorner", close)
+closecorner.CornerRadius = UDim.new(0, 10)
+
+-- Content Area (chỉ để trang trí)
+local content = Instance.new("Frame")
+content.Parent = main
+content.Size = UDim2.new(1, -24, 1, -66)
+content.Position = UDim2.new(0, 12, 0, 54)
+content.BackgroundTransparency = 1
+
+-- Một số phần trang trí giả (không chức năng)
+local deco1 = Instance.new("Frame", content)
+deco1.Size = UDim2.new(1, 0, 0, 80)
+deco1.Position = UDim2.new(0, 0, 0, 0)
+deco1.BackgroundColor3 = Color3.fromRGB(25, 25, 38)
+deco1.BackgroundTransparency = 0.4
+Instance.new("UICorner", deco1).CornerRadius = UDim.new(0, 12)
+
+local deco2 = Instance.new("Frame", content)
+deco2.Size = UDim2.new(0.48, 0, 1, -90)
+deco2.Position = UDim2.new(0, 0, 0, 90)
+deco2.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+deco2.BackgroundTransparency = 0.5
+Instance.new("UICorner", deco2).CornerRadius = UDim.new(0, 12)
+
+local deco3 = Instance.new("Frame", content)
+deco3.Size = UDim2.new(0.48, 0, 1, -90)
+deco3.Position = UDim2.new(0.52, 4, 0, 90)
+deco3.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+deco3.BackgroundTransparency = 0.5
+Instance.new("UICorner", deco3).CornerRadius = UDim.new(0, 12)
+
+-- Draggable
+local dragging, dragStart, startPos
+titlebar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = main.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
 end)
 
--- TITLE
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1,0,0,60)
-title.Position = UDim2.new(0,0,0,10)
-title.BackgroundTransparency = 1
-title.Text = "TNThud MAX HUB"
-title.TextColor3 = Color3.fromRGB(255,255,255)
-title.TextScaled = true
-title.Parent = main
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        main.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
 
--- SIDEBAR (WIDER)
-local sidebar = Instance.new("Frame")
-sidebar.Size = UDim2.new(0,200,1,-80)
-sidebar.Position = UDim2.new(0,10,0,70)
-sidebar.BackgroundColor3 = Color3.fromRGB(20,20,20)
-sidebar.Parent = main
-Instance.new("UICorner", sidebar).CornerRadius = UDim.new(0,18)
+-- Close button
+close.MouseButton1Click:Connect(function()
+    sg:Destroy()
+    getgenv().PureGUI = nil
+    print("Pure GUI đã được gỡ")
+end)
 
--- CONTENT
-local content = Instance.new("Frame")
-content.Size = UDim2.new(1,-230,1,-90)
-content.Position = UDim2.new(0,220,0,75)
-content.BackgroundTransparency = 1
-content.Parent = main
+-- Toggle bằng INSERT
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if input.KeyCode == Enum.KeyCode.Insert then
+        main.Visible = not main.Visible
+    end
+end)
 
-local currentTab = nil
+-- Animation mở GUI
+main.Size = UDim2.new(0, 0, 0, 0)
+main.Position = UDim2.new(0.5, 0, 0.5, 0)
+TweenService:Create(main, TweenInfo.new(0.65, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+    Size = UDim2.new(0, 480, 0, 360),
+    Position = UDim2.new(0.5, -240, 0.5, -180)
+}):Play()
 
--- TAB FUNCTION
-local function createTab(name,order)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1,-20,0,55)
-    btn.Position = UDim2.new(0,10,0,(order-1)*65+15)
-    btn.BackgroundColor3 = Color3.fromRGB(30,30,30)
-    btn.Text = name
-    btn.TextColor3 = Color3.fromRGB(255,255,255)
-    btn.TextScaled = true
-    btn.Parent = sidebar
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,14)
+task.delay(0.1, function()
+    main.Visible = true
+end)
 
-    local page = Instance.new("Frame")
-    page.Size = UDim2.new(1,0,1,0)
-    page.BackgroundTransparency = 1
-    page.Visible = false
-    page.Parent = content
-
-    btn.MouseButton1Click:Connect(function()
-        if currentTab then
-            currentTab.Visible = false
-        end
-        page.Visible = true
-        currentTab = page
-        
-        TweenService:Create(btn,TweenInfo.new(0.2),{
-            BackgroundColor3 = Color3.fromRGB(45,45,45)
-        }):Play()
-    end)
-
-    return page
-end
-
--- CREATE TABS
-local mainTab = createTab("Main",1)
-local settingsTab = createTab("Settings",2)
-local visualTab = createTab("Visual",3)
-local infoTab = createTab("Info",4)
-
-mainTab.Visible = true
-currentTab = mainTab
-
--- PROFESSIONAL BUTTON
-local function createButton(parent,text,posY)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.9,0,0,65)
-    btn.Position = UDim2.new(0.05,0,0,posY)
-    btn.BackgroundColor3 = Color3.fromRGB(25,25,25)
-    btn.Text = text
-    btn.TextColor3 = Color3.fromRGB(255,255,255)
-    btn.TextScaled = true
-    btn.Parent = parent
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,16)
-
-    btn.MouseEnter:Connect(function()
-        TweenService:Create(btn,TweenInfo.new(0.15),{
-            BackgroundColor3 = Color3.fromRGB(40,40,40)
-        }):Play()
-    end)
-
-    btn.MouseLeave:Connect(function()
-        TweenService:Create(btn,TweenInfo.new(0.15),{
-            BackgroundColor3 = Color3.fromRGB(25,25,25)
-        }):Play()
-    end)
-end
-
--- SAMPLE CONTENT
-createButton(mainTab,"Start Feature",20)
-createButton(mainTab,"Enable Boost",100)
-createButton(settingsTab,"Reset Settings",20)
-
-local info = Instance.new("TextLabel")
-info.Size = UDim2.new(1,0,0,120)
-info.BackgroundTransparency = 1
-info.Text = "TNThud MAX\nUltra Professional Layout\nLarge Scale Hub Design"
-info.TextColor3 = Color3.fromRGB(200,200,200)
-info.TextScaled = true
-info.Parent = infoTab
+print("Pure GUI loaded! Nhấn INSERT để mở/đóng | Chỉ giao diện, không chức năng")
