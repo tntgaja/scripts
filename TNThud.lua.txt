@@ -1,89 +1,85 @@
--- TNThud GUI 2026
--- Clean - Không library ngoài
+-- TNThud Pro - Redz Style UI
+-- Clean Professional Layout
 
 local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+
 local player = Players.LocalPlayer
 
--- Xóa GUI cũ nếu có
-if player.PlayerGui:FindFirstChild("TNThudGui") then
-    player.PlayerGui.TNThudGui:Destroy()
+-- Remove old GUI
+if player.PlayerGui:FindFirstChild("TNThudPro") then
+    player.PlayerGui.TNThudPro:Destroy()
 end
 
--- ScreenGui
+-- GUI
 local gui = Instance.new("ScreenGui")
-gui.Name = "TNThudGui"
+gui.Name = "TNThudPro"
 gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
--- Nút mở
-local openBtn = Instance.new("TextButton")
-openBtn.Size = UDim2.new(0,60,0,60)
-openBtn.Position = UDim2.new(0,20,0.5,-30)
-openBtn.Text = "TN"
-openBtn.TextScaled = true
-openBtn.BackgroundColor3 = Color3.fromRGB(20,20,20)
-openBtn.TextColor3 = Color3.fromRGB(255,255,255)
-openBtn.Parent = gui
-Instance.new("UICorner", openBtn).CornerRadius = UDim.new(1,0)
-
 -- Main Frame
 local main = Instance.new("Frame")
-main.Size = UDim2.new(0,320,0,260)
-main.Position = UDim2.new(0.5,-160,0.5,-130)
-main.BackgroundColor3 = Color3.fromRGB(25,25,25)
-main.Visible = false
+main.Size = UDim2.new(0,500,0,350)
+main.Position = UDim2.new(0.5,-250,0.5,-175)
+main.BackgroundColor3 = Color3.fromRGB(18,18,18)
 main.Active = true
 main.Draggable = true
 main.Parent = gui
-Instance.new("UICorner", main).CornerRadius = UDim.new(0,15)
+Instance.new("UICorner", main).CornerRadius = UDim.new(0,18)
+
+-- RGB Top Bar
+local topBar = Instance.new("Frame")
+topBar.Size = UDim2.new(1,0,0,5)
+topBar.BackgroundColor3 = Color3.fromRGB(255,0,0)
+topBar.Parent = main
+Instance.new("UICorner", topBar).CornerRadius = UDim.new(0,18)
+
+local hue = 0
+RunService.RenderStepped:Connect(function()
+    hue += 0.002
+    if hue > 1 then hue = 0 end
+    topBar.BackgroundColor3 = Color3.fromHSV(hue,1,1)
+end)
 
 -- Title
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1,0,0,40)
+title.Size = UDim2.new(1,0,0,50)
+title.Position = UDim2.new(0,0,0,10)
 title.BackgroundTransparency = 1
-title.Text = "TNThud Hub"
+title.Text = "TNThud Pro Hub"
 title.TextColor3 = Color3.fromRGB(255,255,255)
 title.TextScaled = true
 title.Parent = main
 
--- Nút đóng
-local close = Instance.new("TextButton")
-close.Size = UDim2.new(0,30,0,30)
-close.Position = UDim2.new(1,-35,0,5)
-close.Text = "X"
-close.TextScaled = true
-close.BackgroundColor3 = Color3.fromRGB(60,0,0)
-close.TextColor3 = Color3.fromRGB(255,255,255)
-close.Parent = main
-Instance.new("UICorner", close).CornerRadius = UDim.new(1,0)
+-- Sidebar
+local sidebar = Instance.new("Frame")
+sidebar.Size = UDim2.new(0,150,1,-60)
+sidebar.Position = UDim2.new(0,0,0,60)
+sidebar.BackgroundColor3 = Color3.fromRGB(22,22,22)
+sidebar.Parent = main
+Instance.new("UICorner", sidebar).CornerRadius = UDim.new(0,15)
 
--- Tabs Frame
-local tabFrame = Instance.new("Frame")
-tabFrame.Size = UDim2.new(1,0,0,40)
-tabFrame.Position = UDim2.new(0,0,0,45)
-tabFrame.BackgroundTransparency = 1
-tabFrame.Parent = main
-
--- Content
+-- Content Area
 local content = Instance.new("Frame")
-content.Size = UDim2.new(1,0,1,-90)
-content.Position = UDim2.new(0,0,0,85)
+content.Size = UDim2.new(1,-170,1,-70)
+content.Position = UDim2.new(0,160,0,60)
 content.BackgroundTransparency = 1
 content.Parent = main
 
-local tabs = {}
+-- Tab System
 local currentTab = nil
 
-local function createTab(name)
-    local tabBtn = Instance.new("TextButton")
-    tabBtn.Size = UDim2.new(0.5,0,1,0)
-    tabBtn.Position = UDim2.new(#tabs*0.5,0,0,0)
-    tabBtn.Text = name
-    tabBtn.TextScaled = true
-    tabBtn.BackgroundColor3 = Color3.fromRGB(35,35,35)
-    tabBtn.TextColor3 = Color3.fromRGB(255,255,255)
-    tabBtn.Parent = tabFrame
-    Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0,8)
+local function createTab(name,order)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1,-20,0,45)
+    btn.Position = UDim2.new(0,10,0,(order-1)*55+10)
+    btn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+    btn.Text = name
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
+    btn.TextScaled = true
+    btn.Parent = sidebar
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,10)
 
     local page = Instance.new("Frame")
     page.Size = UDim2.new(1,0,1,0)
@@ -91,76 +87,63 @@ local function createTab(name)
     page.Visible = false
     page.Parent = content
 
-    tabBtn.MouseButton1Click:Connect(function()
+    btn.MouseButton1Click:Connect(function()
         if currentTab then
             currentTab.Visible = false
         end
         page.Visible = true
         currentTab = page
+
+        TweenService:Create(btn,TweenInfo.new(0.2),{
+            BackgroundColor3 = Color3.fromRGB(45,45,45)
+        }):Play()
     end)
 
-    table.insert(tabs, tabBtn)
     return page
 end
 
--- Tạo 2 tab
-local tab1 = createTab("Main")
-local tab2 = createTab("Settings")
+-- Create Tabs
+local mainTab = createTab("Main",1)
+local settingsTab = createTab("Settings",2)
+local infoTab = createTab("Info",3)
 
-tab1.Visible = true
-currentTab = tab1
+mainTab.Visible = true
+currentTab = mainTab
 
--- Button
-local function createButton(parent,text,posY,callback)
+-- Professional Button
+local function createButton(parent,text,posY)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.9,0,0,40)
+    btn.Size = UDim2.new(0.9,0,0,50)
     btn.Position = UDim2.new(0.05,0,0,posY)
+    btn.BackgroundColor3 = Color3.fromRGB(28,28,28)
     btn.Text = text
-    btn.TextScaled = true
-    btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
     btn.TextColor3 = Color3.fromRGB(255,255,255)
-    btn.Parent = parent
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,10)
-    btn.MouseButton1Click:Connect(callback)
-end
-
--- Toggle
-local function createToggle(parent,text,posY)
-    local state = false
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.9,0,0,40)
-    btn.Position = UDim2.new(0.05,0,0,posY)
-    btn.Text = text.." : OFF"
     btn.TextScaled = true
-    btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    btn.TextColor3 = Color3.fromRGB(255,255,255)
     btn.Parent = parent
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,10)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,12)
 
-    btn.MouseButton1Click:Connect(function()
-        state = not state
-        btn.Text = text.." : "..(state and "ON" or "OFF")
+    btn.MouseEnter:Connect(function()
+        TweenService:Create(btn,TweenInfo.new(0.15),{
+            BackgroundColor3 = Color3.fromRGB(40,40,40)
+        }):Play()
+    end)
+
+    btn.MouseLeave:Connect(function()
+        TweenService:Create(btn,TweenInfo.new(0.15),{
+            BackgroundColor3 = Color3.fromRGB(28,28,28)
+        }):Play()
     end)
 end
 
--- Nội dung tab
-createButton(tab1,"Print Test",10,function()
-    print("TNThud đang chạy OK")
-end)
+-- Add sample content
+createButton(mainTab,"Start Function",10)
+createButton(mainTab,"Enable Feature",70)
+createButton(settingsTab,"Reset Settings",10)
 
-createToggle(tab1,"Test Toggle",60)
-
-createButton(tab2,"Reset Character",10,function()
-    if player.Character then
-        player.Character:BreakJoints()
-    end
-end)
-
--- Mở / đóng
-openBtn.MouseButton1Click:Connect(function()
-    main.Visible = true
-end)
-
-close.MouseButton1Click:Connect(function()
-    main.Visible = false
-end)
+local infoLabel = Instance.new("TextLabel")
+infoLabel.Size = UDim2.new(1,0,0,100)
+infoLabel.BackgroundTransparency = 1
+infoLabel.Text = "TNThud Pro UI\nProfessional Redz Style Layout"
+infoLabel.TextColor3 = Color3.fromRGB(200,200,200)
+infoLabel.TextScaled = true
+infoLabel.Parent = infoTab
