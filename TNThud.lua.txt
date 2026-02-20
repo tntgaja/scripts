@@ -1,568 +1,166 @@
--- RedzHub Style GUI Hub - Chi tiết, đẹp, mượt 2026 (Custom UI, không library ngoài)
--- Chạy mượt trong Delta, Solara, Swift, Fluxus, Bunni... (Byfron bypass OK)
--- Tác giả: Grok hỗ trợ Thắng - Phong cách RedzHub chính xác (dark gradient, glow, slide anim)
--- Paste vào executor → Execute. Hoặc upload GitHub raw + loadstring(game:HttpGet("URL"))()
+-- TNThud GUI 2026
+-- Clean - Không library ngoài
 
 local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local TeleportService = game:GetService("TeleportService")
-local HttpService = game:GetService("HttpService")
-local Lighting = game:GetService("Lighting")
-local CoreGui = game:GetService("CoreGui")
-
 local player = Players.LocalPlayer
-local mouse = player:GetMouse()
 
--- =============== BIẾN GLOBAL ===============
-getgenv().RedzHub = {
-    Toggles = {},
-    Sliders = {},
-    Connections = {}
-}
-
--- =============== TẠO GUI ===============
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "RedzHub"
-ScreenGui.Parent = CoreGui
-ScreenGui.ResetOnSpawn = false
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
--- Main Frame (Draggable, Dark Theme)
-local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-MainFrame.BorderSizePixel = 0
-MainFrame.Position = UDim2.new(0.5, -250, 0.5, -200)
-MainFrame.Size = UDim2.new(0, 500, 0, 400)
-MainFrame.ClipsDescendants = true
-
--- UICorner cho MainFrame
-local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 12)
-MainCorner.Parent = MainFrame
-
--- UIStroke (Glow border)
-local MainStroke = Instance.new("UIStroke")
-MainStroke.Color = Color3.fromRGB(100, 150, 255)
-MainStroke.Thickness = 2
-MainStroke.Transparency = 0.5
-MainStroke.Parent = MainFrame
-
--- UIGradient cho MainFrame (RedzHub style gradient)
-local MainGradient = Instance.new("UIGradient")
-MainGradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(35, 35, 45)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 30))
-}
-MainGradient.Rotation = 45
-MainGradient.Parent = MainFrame
-
--- Title Bar (Draggable)
-local TitleBar = Instance.new("Frame")
-TitleBar.Name = "TitleBar"
-TitleBar.Parent = MainFrame
-TitleBar.BackgroundTransparency = 1
-TitleBar.Size = UDim2.new(1, 0, 0, 40)
-
-local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Name = "Title"
-TitleLabel.Parent = TitleBar
-TitleLabel.BackgroundTransparency = 1
-TitleLabel.Position = UDim2.new(0, 15, 0, 0)
-TitleLabel.Size = UDim2.new(1, -70, 1, 0)
-TitleLabel.Font = Enum.Font.GothamBold
-TitleLabel.Text = "RedzHub V2.0"
-TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TitleLabel.TextSize = 16
-TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-
--- Minimize Button
-local MinimizeBtn = Instance.new("TextButton")
-MinimizeBtn.Name = "Minimize"
-MinimizeBtn.Parent = TitleBar
-MinimizeBtn.BackgroundTransparency = 1
-MinimizeBtn.Position = UDim2.new(1, -50, 0, 0)
-MinimizeBtn.Size = UDim2.new(0, 25, 1, 0)
-MinimizeBtn.Font = Enum.Font.Gotham
-MinimizeBtn.Text = "-"
-MinimizeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-MinimizeBtn.TextSize = 18
-
--- Close Button
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Name = "Close"
-CloseBtn.Parent = TitleBar
-CloseBtn.BackgroundTransparency = 1
-CloseBtn.Position = UDim2.new(1, -20, 0, 0)
-CloseBtn.Size = UDim2.new(0, 25, 1, 0)
-CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.Text = "×"
-CloseBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
-CloseBtn.TextSize = 18
-
--- Content Frame (Scroll)
-local ContentFrame = Instance.new("ScrollingFrame")
-ContentFrame.Name = "Content"
-ContentFrame.Parent = MainFrame
-ContentFrame.BackgroundTransparency = 1
-ContentFrame.Position = UDim2.new(0, 0, 0, 40)
-ContentFrame.Size = UDim2.new(1, 0, 1, -40)
-ContentFrame.ScrollBarThickness = 6
-ContentFrame.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
-ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-ContentFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-
--- Tab Buttons (Horizontal)
-local TabContainer = Instance.new("Frame")
-TabContainer.Name = "Tabs"
-TabContainer.Parent = ContentFrame
-TabContainer.BackgroundTransparency = 1
-TabContainer.Size = UDim2.new(1, 0, 0, 45)
-
-local function CreateTab(name, posX)
-    local TabBtn = Instance.new("TextButton")
-    TabBtn.Name = name .. "Tab"
-    TabBtn.Parent = TabContainer
-    TabBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-    TabBtn.BorderSizePixel = 0
-    TabBtn.Position = UDim2.new(0, posX, 0, 5)
-    TabBtn.Size = UDim2.new(0, 100, 0, 35)
-    TabBtn.Font = Enum.Font.GothamSemibold
-    TabBtn.Text = name
-    TabBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-    TabBtn.TextSize = 14
-
-    local TabCorner = Instance.new("UICorner")
-    TabCorner.CornerRadius = UDim.new(0, 8)
-    TabCorner.Parent = TabBtn
-
-    local TabStroke = Instance.new("UIStroke")
-    TabStroke.Color = Color3.fromRGB(60, 60, 70)
-    TabStroke.Thickness = 1
-    TabStroke.Parent = TabBtn
-
-    return TabBtn
+-- Xóa GUI cũ nếu có
+if player.PlayerGui:FindFirstChild("TNThudGui") then
+    player.PlayerGui.TNThudGui:Destroy()
 end
 
--- Tạo Tabs
-local MovementTab = CreateTab("Movement", 10)
-local RenderTab = CreateTab("Render", 120)
-local MiscTab = CreateTab("Misc", 230)
+-- ScreenGui
+local gui = Instance.new("ScreenGui")
+gui.Name = "TNThudGui"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
 
--- Tab Content Holders
-local TabContents = {}
-for _, tab in pairs({MovementTab, RenderTab, MiscTab}) do
-    local Content = Instance.new("Frame")
-    Content.Name = tab.Name .. "Content"
-    Content.Parent = ContentFrame
-    Content.BackgroundTransparency = 1
-    Content.Size = UDim2.new(1, -20, 1, -50)
-    Content.Position = UDim2.new(0, 10, 0, 50)
-    Content.Visible = false
-    TabContents[tab] = Content
-end
+-- Nút mở
+local openBtn = Instance.new("TextButton")
+openBtn.Size = UDim2.new(0,60,0,60)
+openBtn.Position = UDim2.new(0,20,0.5,-30)
+openBtn.Text = "TN"
+openBtn.TextScaled = true
+openBtn.BackgroundColor3 = Color3.fromRGB(20,20,20)
+openBtn.TextColor3 = Color3.fromRGB(255,255,255)
+openBtn.Parent = gui
+Instance.new("UICorner", openBtn).CornerRadius = UDim.new(1,0)
 
--- Set default tab
-MovementTab.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
-MovementTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-TabContents[MovementTab].Visible = true
+-- Main Frame
+local main = Instance.new("Frame")
+main.Size = UDim2.new(0,320,0,260)
+main.Position = UDim2.new(0.5,-160,0.5,-130)
+main.BackgroundColor3 = Color3.fromRGB(25,25,25)
+main.Visible = false
+main.Active = true
+main.Draggable = true
+main.Parent = gui
+Instance.new("UICorner", main).CornerRadius = UDim.new(0,15)
 
--- Tab Switch Logic
-local function SwitchTab(activeTab)
-    for tab, content in pairs(TabContents) do
-        content.Visible = false
-        tab.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-        tab.TextColor3 = Color3.fromRGB(200, 200, 200)
-        tab:FindFirstChild("UIStroke").Color = Color3.fromRGB(60, 60, 70)
-    end
-    activeTab.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
-    activeTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-    activeTab:FindFirstChild("UIStroke").Color = Color3.fromRGB(150, 200, 255)
-    TabContents[activeTab].Visible = true
-end
+-- Title
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1,0,0,40)
+title.BackgroundTransparency = 1
+title.Text = "TNThud Hub"
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.TextScaled = true
+title.Parent = main
 
-MovementTab.MouseButton1Click:Connect(function() SwitchTab(MovementTab) end)
-RenderTab.MouseButton1Click:Connect(function() SwitchTab(RenderTab) end)
-MiscTab.MouseButton1Click:Connect(function() SwitchTab(MiscTab) end)
+-- Nút đóng
+local close = Instance.new("TextButton")
+close.Size = UDim2.new(0,30,0,30)
+close.Position = UDim2.new(1,-35,0,5)
+close.Text = "X"
+close.TextScaled = true
+close.BackgroundColor3 = Color3.fromRGB(60,0,0)
+close.TextColor3 = Color3.fromRGB(255,255,255)
+close.Parent = main
+Instance.new("UICorner", close).CornerRadius = UDim.new(1,0)
 
--- =============== TẠO TOGGLE ===============
-local function CreateToggle(parent, name, callback, default)
-    local ToggleFrame = Instance.new("Frame")
-    ToggleFrame.Name = name
-    ToggleFrame.Parent = parent
-    ToggleFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-    ToggleFrame.BorderSizePixel = 0
-    ToggleFrame.Position = UDim2.new(0, 0, 0, (#parent:GetChildren() - 1) * 50)
-    ToggleFrame.Size = UDim2.new(1, 0, 0, 45)
+-- Tabs Frame
+local tabFrame = Instance.new("Frame")
+tabFrame.Size = UDim2.new(1,0,0,40)
+tabFrame.Position = UDim2.new(0,0,0,45)
+tabFrame.BackgroundTransparency = 1
+tabFrame.Parent = main
 
-    local ToggleCorner = Instance.new("UICorner")
-    ToggleCorner.CornerRadius = UDim.new(0, 8)
-    ToggleCorner.Parent = ToggleFrame
+-- Content
+local content = Instance.new("Frame")
+content.Size = UDim2.new(1,0,1,-90)
+content.Position = UDim2.new(0,0,0,85)
+content.BackgroundTransparency = 1
+content.Parent = main
 
-    local ToggleStroke = Instance.new("UIStroke")
-    ToggleStroke.Color = Color3.fromRGB(50, 50, 60)
-    ToggleStroke.Thickness = 1
-    ToggleStroke.Parent = ToggleFrame
+local tabs = {}
+local currentTab = nil
 
-    local Label = Instance.new("TextLabel")
-    Label.Name = "Label"
-    Label.Parent = ToggleFrame
-    Label.BackgroundTransparency = 1
-    Label.Position = UDim2.new(0, 15, 0, 0)
-    Label.Size = UDim2.new(0.7, 0, 1, 0)
-    Label.Font = Enum.Font.Gotham
-    Label.Text = name
-    Label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Label.TextSize = 14
-    Label.TextXAlignment = Enum.TextXAlignment.Left
+local function createTab(name)
+    local tabBtn = Instance.new("TextButton")
+    tabBtn.Size = UDim2.new(0.5,0,1,0)
+    tabBtn.Position = UDim2.new(#tabs*0.5,0,0,0)
+    tabBtn.Text = name
+    tabBtn.TextScaled = true
+    tabBtn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    tabBtn.TextColor3 = Color3.fromRGB(255,255,255)
+    tabBtn.Parent = tabFrame
+    Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0,8)
 
-    local ToggleBtn = Instance.new("TextButton")
-    ToggleBtn.Name = "Toggle"
-    ToggleBtn.Parent = ToggleFrame
-    ToggleBtn.BackgroundColor3 = Color3.fromRGB(60, 200, 60)
-    ToggleBtn.BorderSizePixel = 0
-    ToggleBtn.Position = UDim2.new(1, -50, 0.5, -12)
-    ToggleBtn.Size = UDim2.new(0, 30, 0, 24)
-    ToggleBtn.Font = Enum.Font.GothamBold
-    ToggleBtn.Text = ""
-    ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    local page = Instance.new("Frame")
+    page.Size = UDim2.new(1,0,1,0)
+    page.BackgroundTransparency = 1
+    page.Visible = false
+    page.Parent = content
 
-    local BtnCorner = Instance.new("UICorner")
-    BtnCorner.CornerRadius = UDim.new(0, 12)
-    BtnCorner.Parent = ToggleBtn
-
-    local Indicator = Instance.new("Frame")
-    Indicator.Name = "Indicator"
-    Indicator.Parent = ToggleBtn
-    Indicator.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    Indicator.BorderSizePixel = 0
-    Indicator.Position = UDim2.new(0, 2, 0, 2)
-    Indicator.Size = UDim2.new(0, 20, 0, 20)
-    Indicator.ZIndex = 10
-
-    local IndCorner = Instance.new("UICorner")
-    IndCorner.CornerRadius = UDim.new(0, 10)
-    IndCorner.Parent = Indicator
-
-    local state = default or false
-    RedzHub.Toggles[name] = state
-
-    local function UpdateToggle()
-        RedzHub.Toggles[name] = state
-        callback(state)
-        if state then
-            TweenService:Create(ToggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(60, 200, 60)}):Play()
-            TweenService:Create(Indicator, TweenInfo.new(0.2), {Position = UDim2.new(1, -22, 0, 2)}):Play()
-        else
-            TweenService:Create(ToggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(200, 60, 60)}):Play()
-            TweenService:Create(Indicator, TweenInfo.new(0.2), {Position = UDim2.new(0, 2, 0, 2)}):Play()
+    tabBtn.MouseButton1Click:Connect(function()
+        if currentTab then
+            currentTab.Visible = false
         end
-    end
+        page.Visible = true
+        currentTab = page
+    end)
 
-    ToggleBtn.MouseButton1Click:Connect(function()
+    table.insert(tabs, tabBtn)
+    return page
+end
+
+-- Tạo 2 tab
+local tab1 = createTab("Main")
+local tab2 = createTab("Settings")
+
+tab1.Visible = true
+currentTab = tab1
+
+-- Button
+local function createButton(parent,text,posY,callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0.9,0,0,40)
+    btn.Position = UDim2.new(0.05,0,0,posY)
+    btn.Text = text
+    btn.TextScaled = true
+    btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
+    btn.Parent = parent
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,10)
+    btn.MouseButton1Click:Connect(callback)
+end
+
+-- Toggle
+local function createToggle(parent,text,posY)
+    local state = false
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0.9,0,0,40)
+    btn.Position = UDim2.new(0.05,0,0,posY)
+    btn.Text = text.." : OFF"
+    btn.TextScaled = true
+    btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
+    btn.Parent = parent
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,10)
+
+    btn.MouseButton1Click:Connect(function()
         state = not state
-        UpdateToggle()
+        btn.Text = text.." : "..(state and "ON" or "OFF")
     end)
-
-    UpdateToggle()
-    ContentFrame.CanvasSize = UDim2.new(0, 0, 0, ContentFrame.CanvasSize.Y.Offset + 55)
-    return ToggleFrame
 end
 
--- =============== TẠO SLIDER ===============
-local function CreateSlider(parent, name, min, max, default, callback, suffix)
-    local SliderFrame = Instance.new("Frame")
-    SliderFrame.Name = name
-    SliderFrame.Parent = parent
-    SliderFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-    SliderFrame.BorderSizePixel = 0
-    SliderFrame.Position = UDim2.new(0, 0, 0, (#parent:GetChildren() - 1) * 60)
-    SliderFrame.Size = UDim2.new(1, 0, 0, 55)
-
-    local SliderCorner = Instance.new("UICorner")
-    SliderCorner.CornerRadius = UDim.new(0, 8)
-    SliderCorner.Parent = SliderFrame
-
-    local SliderStroke = Instance.new("UIStroke")
-    SliderStroke.Color = Color3.fromRGB(50, 50, 60)
-    SliderStroke.Thickness = 1
-    SliderStroke.Parent = SliderFrame
-
-    local Label = Instance.new("TextLabel")
-    Label.Name = "Label"
-    Label.Parent = SliderFrame
-    Label.BackgroundTransparency = 1
-    Label.Position = UDim2.new(0, 15, 0, 5)
-    Label.Size = UDim2.new(0.6, 0, 0.4, 0)
-    Label.Font = Enum.Font.Gotham
-    Label.Text = name .. ": " .. default .. (suffix or "")
-    Label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Label.TextSize = 14
-    Label.TextXAlignment = Enum.TextXAlignment.Left
-
-    local SliderBar = Instance.new("Frame")
-    SliderBar.Name = "Bar"
-    SliderBar.Parent = SliderFrame
-    SliderBar.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
-    SliderBar.BorderSizePixel = 0
-    SliderBar.Position = UDim2.new(0, 15, 0.6, 0)
-    SliderBar.Size = UDim2.new(1, -30, 0, 6)
-
-    local BarCorner = Instance.new("UICorner")
-    BarCorner.CornerRadius = UDim.new(0, 3)
-    BarCorner.Parent = SliderBar
-
-    local SliderFill = Instance.new("Frame")
-    SliderFill.Name = "Fill"
-    SliderFill.Parent = SliderBar
-    SliderFill.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
-    SliderFill.BorderSizePixel = 0
-    SliderFill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
-    SliderFill.ZIndex = 2
-
-    local FillCorner = Instance.new("UICorner")
-    FillCorner.CornerRadius = UDim.new(0, 3)
-    FillCorner.Parent = SliderFill
-
-    local SliderBtn = Instance.new("TextButton")
-    SliderBtn.Name = "Btn"
-    SliderBtn.Parent = SliderBar
-    SliderBtn.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
-    SliderBtn.BorderSizePixel = 0
-    SliderBtn.Position = UDim2.new((default - min) / (max - min), -8, -0.5, 0)
-    SliderBtn.Size = UDim2.new(0, 16, 0, 16)
-    SliderBtn.Font = Enum.Font.Gotham
-    SliderBtn.Text = ""
-    SliderBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-
-    local BtnCorner = Instance.new("UICorner")
-    BtnCorner.CornerRadius = UDim.new(0, 8)
-    BtnCorner.Parent = SliderBtn
-
-    local value = default
-    RedzHub.Sliders[name] = value
-
-    local dragging = false
-
-    local function UpdateSlider(newVal)
-        value = math.clamp(newVal, min, max)
-        RedzHub.Sliders[name] = value
-        Label.Text = name .. ": " .. value .. (suffix or "")
-        local percent = (value - min) / (max - min)
-        TweenService:Create(SliderFill, TweenInfo.new(0.1), {Size = UDim2.new(percent, 0, 1, 0)}):Play()
-        TweenService:Create(SliderBtn, TweenInfo.new(0.1), {Position = UDim2.new(percent, -8, -0.5, 0)}):Play()
-        callback(value)
-    end
-
-    SliderBtn.MouseButton1Down:Connect(function()
-        dragging = true
-    end)
-
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-
-    RunService.RenderStepped:Connect(function()
-        if dragging then
-            local mouseX = mouse.X
-            local barAbsPos = SliderBar.AbsolutePosition.X
-            local barAbsSize = SliderBar.AbsoluteSize.X
-            local relativeX = math.clamp((mouseX - barAbsPos) / barAbsSize, 0, 1)
-            UpdateSlider(min + (max - min) * relativeX)
-        end
-    end)
-
-    UpdateSlider(default)
-    ContentFrame.CanvasSize = UDim2.new(0, 0, 0, ContentFrame.CanvasSize.Y.Offset + 65)
-    return SliderFrame
-end
-
--- =============== TẠO BUTTON ===============
-local function CreateButton(parent, name, callback)
-    local BtnFrame = Instance.new("TextButton")
-    BtnFrame.Name = name
-    BtnFrame.Parent = parent
-    BtnFrame.BackgroundColor3 = Color3.fromRGB(50, 100, 200)
-    BtnFrame.BorderSizePixel = 0
-    BtnFrame.Position = UDim2.new(0, 0, 0, (#parent:GetChildren() - 1) * 50)
-    BtnFrame.Size = UDim2.new(1, 0, 0, 45)
-    BtnFrame.Font = Enum.Font.GothamSemibold
-    BtnFrame.Text = name
-    BtnFrame.TextColor3 = Color3.fromRGB(255, 255, 255)
-    BtnFrame.TextSize = 14
-
-    local BtnCorner = Instance.new("UICorner")
-    BtnCorner.CornerRadius = UDim.new(0, 8)
-    BtnCorner.Parent = BtnFrame
-
-    local BtnStroke = Instance.new("UIStroke")
-    BtnStroke.Color = Color3.fromRGB(70, 120, 220)
-    BtnStroke.Thickness = 1
-    BtnStroke.Parent = BtnFrame
-
-    BtnFrame.MouseButton1Click:Connect(function()
-        TweenService:Create(BtnFrame, TweenInfo.new(0.1), {Size = UDim2.new(1, -10, 0, 40)}):Play()
-        TweenService:Create(BtnFrame, TweenInfo.new(0.2, Enum.EasingStyle.Back), {Size = UDim2.new(1, 0, 0, 45)}):Play()
-        callback()
-    end)
-
-    BtnFrame.MouseEnter:Connect(function()
-        TweenService:Create(BtnFrame, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(70, 120, 220)}):Play()
-    end)
-
-    BtnFrame.MouseLeave:Connect(function()
-        TweenService:Create(BtnFrame, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(50, 100, 200)}):Play()
-    end)
-
-    ContentFrame.CanvasSize = UDim2.new(0, 0, 0, ContentFrame.CanvasSize.Y.Offset + 55)
-    return BtnFrame
-end
-
--- =============== THÊM TÍNH NĂNG ===============
--- Movement Tab
-CreateToggle(TabContents[MovementTab], "Fly", function(state)
-    if state then
-        -- Fly logic (tương tự script trước)
-        local char = player.Character or player.CharacterAdded:Wait()
-        local root = char:WaitForChild("HumanoidRootPart")
-        local bv = Instance.new("BodyVelocity")
-        bv.Name = "FlyBV"
-        bv.MaxForce = Vector3.new(4000, 4000, 4000)
-        bv.Velocity = Vector3.new(0, 0, 0)
-        bv.Parent = root
-        local bg = Instance.new("BodyGyro")
-        bg.Name = "FlyBG"
-        bg.MaxTorque = Vector3.new(4000, 4000, 4000)
-        bg.P = 3000
-        bg.Parent = root
-        RedzHub.Connections.Fly = RunService.Heartbeat:Connect(function()
-            if root.Parent then
-                local cam = workspace.CurrentCamera
-                bg.CFrame = cam.CFrame
-                local speed = RedzHub.Sliders["Fly Speed"] or 50
-                local move = Vector3.new(0,0,0)
-                if UserInputService:IsKeyDown(Enum.KeyCode.W) then move = move + cam.CFrame.LookVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.S) then move = move - cam.CFrame.LookVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.A) then move = move - cam.CFrame.RightVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.D) then move = move + cam.CFrame.RightVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then move = move + Vector3.new(0,1,0) end
-                if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then move = move - Vector3.new(0,1,0) end
-                bv.Velocity = move * speed
-            end
-        end)
-    else
-        if RedzHub.Connections.Fly then RedzHub.Connections.Fly:Disconnect() end
-        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local root = player.Character.HumanoidRootPart
-            if root:FindFirstChild("FlyBV") then root.FlyBV:Destroy() end
-            if root:FindFirstChild("FlyBG") then root.FlyBG:Destroy() end
-        end
-    end
-end, false)
-
-CreateSlider(TabContents[MovementTab], "Fly Speed", 16, 200, 50, function(val)
-    -- Auto update fly speed
-end, "")
-
-CreateToggle(TabContents[MovementTab], "Infinite Jump", function(state)
-    RedzHub.Toggles["Infinite Jump"] = state
-    RedzHub.Connections.InfJump = UserInputService.JumpRequest:Connect(function()
-        if state and player.Character and player.Character:FindFirstChild("Humanoid") then
-            player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-        end
-    end)
-end, false)
-
-CreateToggle(TabContents[MovementTab], "Noclip", function(state)
-    RedzHub.Toggles["Noclip"] = state
-    RedzHub.Connections.Noclip = RunService.Stepped:Connect(function()
-        if state and player.Character then
-            for _, part in pairs(player.Character:GetDescendants()) do
-                if part:IsA("BasePart") and part.CanCollide then
-                    part.CanCollide = false
-                end
-            end
-        end
-    end)
-end, false)
-
-CreateSlider(TabContents[MovementTab], "Walk Speed", 16, 200, 50, function(val)
-    if player.Character and player.Character:FindFirstChild("Humanoid") then
-        player.Character.Humanoid.WalkSpeed = val
-    end
-end, "")
-
--- Render Tab
-CreateToggle(TabContents[RenderTab], "ESP Players", function(state)
-    -- ESP logic đơn giản (Box ESP)
-    for _, plr in pairs(Players:GetPlayers()) do
-        if plr ~= player and plr.Character and plr.Character:FindFirstChild("Head") then
-            local highlight = plr.Character.Head:FindFirstChild("ESP") or Instance.new("Highlight")
-            highlight.Name = "ESP"
-            highlight.FillColor = Color3.fromRGB(255, 0, 0)
-            highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-            highlight.FillTransparency = 0.5
-            highlight.Parent = plr.Character.Head
-        end
-    end
-    -- Note: Full ESP cần loop disconnect khi off
-end, false)
-
--- Misc Tab
-CreateButton(TabContents[MiscTab], "Rejoin Server", function()
-    TeleportService:Teleport(game.PlaceId, player)
+-- Nội dung tab
+createButton(tab1,"Print Test",10,function()
+    print("TNThud đang chạy OK")
 end)
 
-CreateButton(TabContents[MiscTab], "Server Hop", function()
-    local servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
-    local randomServer = servers.data[math.random(1, #servers.data)]
-    TeleportService:TeleportToPlaceInstance(game.PlaceId, randomServer.id)
-end)
+createToggle(tab1,"Test Toggle",60)
 
--- =============== DRAGGABLE & BUTTONS ===============
-local draggingFrame, draggingPos
-TitleBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        draggingFrame = MainFrame
-        draggingPos = input.Position
+createButton(tab2,"Reset Character",10,function()
+    if player.Character then
+        player.Character:BreakJoints()
     end
 end)
 
-UserInputService.InputChanged:Connect(function(input)
-    if draggingFrame and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - draggingPos
-        draggingFrame.Position = UDim2.new(draggingFrame.Position.X.Scale, draggingFrame.Position.X.Offset + delta.X, draggingFrame.Position.Y.Scale, draggingFrame.Position.Y.Offset + delta.Y)
-    end
+-- Mở / đóng
+openBtn.MouseButton1Click:Connect(function()
+    main.Visible = true
 end)
 
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        draggingFrame = nil
-    end
+close.MouseButton1Click:Connect(function()
+    main.Visible = false
 end)
-
--- Minimize
-MinimizeBtn.MouseButton1Click:Connect(function()
-    ContentFrame.Visible = not ContentFrame.Visible
-    MinimizeBtn.Text = ContentFrame.Visible and "-" or "+"
-end)
-
--- Close
-CloseBtn.MouseButton1Click:Connect(function()
-    ScreenGui:Destroy()
-    -- Cleanup connections
-    for _, conn in pairs(RedzHub.Connections) do
-        if conn then conn:Disconnect() end
-    end
-end)
-
--- =============== HOÀN THÀNH ===============
-print("RedzHub loaded! Phong cách RedzHub chính xác - đẹp, mượt 🔥")
--- Tween mở GUI
-MainFrame.Size = UDim2.new(0, 0, 0, 0)
-TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back), {Size = UDim2.new(0, 500, 0, 400)}):Play()
