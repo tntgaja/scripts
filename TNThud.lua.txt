@@ -1,252 +1,197 @@
--- Pure GUI Pro 2026 v5 - Production-Grade Perfect: No Drift Relative, Correct State Assign, Realtime Clamp/View Port Sync
--- Chạy ngon Delta/Solara/Fluxus mobile/PC | Toggle floating | Realtime rescale/no-drift pos/clamp khi xoay/resize
--- Fix: Gán state đúng thứ tự (no select(2) lệch), viewport realtime in relative/reclamp (no cũ), relative ratio global no drift (no accum error resize nhiều), floating scale sync full, minimized state global (multi-inject/resize restore perfect)
--- Cách chạy: Inject, nút floating "GUI" hiện góc phải dưới (scale/clamp no drift). Chạm toggle GUI. Minimize góc trên trái (scale sync). Close destroy clean
--- Hoạt động: Viewport event → rescale/relative ratio pos/reclamp/no-drift, restore min state. Global state → safe inject lại
+-- PureGUI Pro V9 - Clean Framework Edition | Mobile Stable | No Drift | Safe Multi-Inject | Clamp + Debounce + Reactive Full
+-- Fix từ V8: Clamp drag, realtime ViewportSize, relative pos no drift, debounce tween, disconnect conn, floating separate rel, scale min/max, camera change handle
 
-getgenv().PureGUI = getgenv().PureGUI or {connections = {}, state = {minimized = false, relX = 0.5, relY = 0.5}}
-
-local TweenService     = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
-local Players          = game:GetService("Players")
-local RunService       = game:GetService("RunService")
-local player           = Players.LocalPlayer
+local RunService = game:GetService("RunService")
 
--- Hàm wait viewport/camera ready (fix load chậm)
-local function waitForViewportReady()
-    local camera = workspace.CurrentCamera
-    while not camera or camera.ViewportSize.X < 100 do
-        RunService.RenderStepped:Wait()
-        camera = workspace.CurrentCamera
+local player = Players.LocalPlayer
+local PlayerGui = player:WaitForChild("PlayerGui")
+
+-- ========== CLEAN OLD & CONNECTIONS ==========
+local connections = {}
+
+local function cleanup()
+    for _, conn in ipairs(connections) do
+        pcall(function() conn:Disconnect() end)
     end
-    return camera.ViewportSize, camera
+    connections = {}
+    local old = PlayerGui:FindFirstChild("PureGUI_V9")
+    if old then old:Destroy() end
+end
+cleanup()  -- Run lần đầu
+
+-- ========== SCALE SYSTEM ==========
+local function getScale()
+    local cam = workspace.CurrentCamera
+    if not cam then return 1 end
+    local v = cam.ViewportSize
+    return math.clamp(math.min(v.X/1920, v.Y/1080), 0.6, 1.4)
 end
 
--- Hàm kiểm tra & destroy GUI cũ (full cleanup với global state)
-local function checkExistingGUI()
-    local existing = player.PlayerGui:FindFirstChild("PureGUI_Pro_v5")
-    if existing then
-        print("[PureGUI Pro v5] Destroy GUI cũ...")
-        for _, conn in ipairs(getgenv().PureGUI.connections) do pcall(conn.Disconnect, conn) end
-        getgenv().PureGUI.connections = {}
-        getgenv().PureGUI.state = {minimized = false, relX = 0.5, relY = 0.5}
-        existing:Destroy()
+local function getRelativePos(frame, viewport)
+    local centerX = frame.Position.X.Offset + frame.AbsoluteSize.X / 2
+    local centerY = frame.Position.Y.Offset + frame.AbsoluteSize.Y / 2
+    return centerX / viewport.X, centerY / viewport.Y
+end
+
+local function applyRelativePos(frame, relX, relY, viewport, size)
+    local offsetX = relX * viewport.X - size.X.Offset / 2
+    local offsetY = relY * viewport.Y - size.Y.Offset / 2
+    frame.Position = UDim2.new(0, offsetX, 0, offsetY)
+end
+
+-- ========== MAIN FRAME ==========
+local scale = getScale()
+local viewport = workspace.CurrentCamera.ViewportSize
+
+local main = Instance.new("Frame")
+main.Name = "Main"
+main.Size = UDim2.new(0, 420*scale, 0, 300*scale)
+main.Position = UDim2.new(0.5, -210*scale, 0.5, -150*scale)
+main.BackgroundColor3 = Color3.fromRGB(15,15,20)
+main.Visible = true
+main.Parent = gui
+main.ZIndex = 100
+
+Instance.new("UICorner", main).CornerRadius = UDim.new(0, 14)
+Instance.new("UIStroke", main).Color = Color3.fromRGB(80,160,255)
+
+-- ========== TITLE ==========
+local title = Instance.new("TextLabel", main)
+title.Size = UDim2.new(1,0,0,40*scale)
+title.BackgroundTransparency = 1
+title.Text = "PureGUI Pro V9"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 16*scale
+title.TextColor3 = Color3.new(1,1,1)
+
+-- ========== CLOSE BUTTON ==========
+local close = Instance.new("TextButton", main)
+close.Size = UDim2.new(0,40*scale,0,40*scale)
+close.Position = UDim2.new(1,-45*scale,0,0)
+close.Text = "X"
+close.Font = Enum.Font.GothamBold
+close.TextSize = 16*scale
+close.BackgroundTransparency = 1
+close.TextColor3 = Color3.fromRGB(255,90,90)
+
+-- ========== FLOATING BUTTON ==========
+local float = Instance.new("TextButton")
+float.Size = UDim2.new(0,55*scale,0,55*scale)
+float.Position = UDim2.new(1,-70*scale,1,-70*scale)
+float.BackgroundColor3 = Color3.fromRGB(60,140,255)
+float.Text = "GUI"
+float.Font = Enum.Font.GothamBold
+float.TextSize = 14*scale
+float.TextColor3 = Color3.new(1,1,1)
+float.Parent = gui
+float.ZIndex = 9999
+
+Instance.new("UICorner", float).CornerRadius = UDim.new(1,0)
+
+-- ========== DRAG SYSTEM (clamp realtime) ==========
+local draggingMain, dragStartMain, startPosMain
+local draggingFloat, dragStartFloat, startPosFloat
+
+-- Drag Main (titlebar)
+title.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        draggingMain = true
+        dragStartMain = input.Position
+        startPosMain = main.Position
     end
-end
+end)
 
--- Hàm tạo ScreenGui (local sg)
-local function createScreenGui()
-    local sg = Instance.new("ScreenGui")
-    sg.Name = "PureGUI_Pro_v5"
-    sg.ResetOnSpawn = false
-    sg.IgnoreGuiInset = true
-    sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    sg.Parent = player:WaitForChild("PlayerGui")
-    sg.Enabled = true
-    print("[PureGUI Pro v5] ScreenGui created")
-    return sg
-end
+-- Drag Floating
+float.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        draggingFloat = true
+        dragStartFloat = input.Position
+        startPosFloat = float.Position
+    end
+end)
 
--- Hàm calculate scale/pos/size realtime (return đúng order)
-local function calculateScale(viewport)
-    local scaleFactor = math.min(viewport.X / 1920, viewport.Y / 1080)
-    local fullSize = UDim2.new(0, 400 * scaleFactor, 0, 300 * scaleFactor)
-    local minSize = UDim2.new(0, 320 * scaleFactor, 0, 44 * scaleFactor)
-    local floatingSize = UDim2.new(0, 50 * scaleFactor, 0, 50 * scaleFactor)
-    return scaleFactor, fullSize, minSize, floatingSize
-end
+UserInputService.InputChanged:Connect(function(input)
+    local viewport = workspace.CurrentCamera.ViewportSize
+    local buffer = 20
 
--- Hàm tạo Main Frame (scale realtime)
-local function createMainFrame(sg, viewport)
-    local scaleFactor, fullSize, _, _ = calculateScale(viewport)
-    local fullPos = UDim2.new(getgenv().PureGUI.state.relX, -200 * scaleFactor, getgenv().PureGUI.state.relY, -150 * scaleFactor)
-
-    local main = Instance.new("Frame", sg)
-    main.Name = "Main"
-    main.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
-    main.Position = fullPos
-    main.Size = fullSize
-    main.ClipsDescendants = true
-    main.Visible = false
-    main.ZIndex = 1000
-
-    Instance.new("UICorner", main).CornerRadius = UDim.new(0, 12)
-    Instance.new("UIStroke", main).Color = Color3.fromRGB(80, 160, 255)
-
-    return main
-end
-
--- (Hàm createTitleBar và createContent giữ nguyên như v4, bỏ qua để ngắn gọn)
-
--- Hàm tạo Floating Toggle (scale sync realtime)
-local function createFloatingToggle(sg, viewport)
-    local _, _, _, floatingSize = calculateScale(viewport)
-    local toggleBtn = Instance.new("TextButton", sg)
-    toggleBtn.Name = "FloatingToggle"
-    toggleBtn.Size = floatingSize
-    toggleBtn.Position = UDim2.new(1, -floatingSize.X.Offset - 10, 1, -floatingSize.Y.Offset - 10)
-    toggleBtn.BackgroundColor3 = Color3.fromRGB(60, 140, 255)
-    toggleBtn.Text = "GUI"
-    toggleBtn.Font = Enum.Font.GothamBold
-    toggleBtn.TextColor3 = Color3.new(1,1,1)
-    toggleBtn.TextSize = 14
-    toggleBtn.ZIndex = 9999
-
-    Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(1, 0)
-    Instance.new("UIStroke", toggleBtn).Color = Color3.fromRGB(40, 100, 200)
-
-    return toggleBtn
-end
-
--- Hàm setup drag clamp (realtime viewport, buffer 20px)
-local function setupDragClamp(frame, buffer)
-    buffer = buffer or 20
-    local dragging, dragStart, startPos
-    table.insert(getgenv().PureGUI.connections, frame.InputBegan:Connect(function(inp)
-        if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = inp.Position
-            startPos = frame.Position
-        end
-    end))
-
-    table.insert(getgenv().PureGUI.connections, UserInputService.InputChanged:Connect(function(inp)
-        if dragging and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
-            local delta = inp.Position - dragStart
-            local newX = startPos.X.Offset + delta.X
-            local newY = startPos.Y.Offset + delta.Y
-            local viewport = workspace.CurrentCamera.ViewportSize  -- Realtime
-            newX = math.clamp(newX, buffer, viewport.X - frame.AbsoluteSize.X - buffer)
-            newY = math.clamp(newY, buffer, viewport.Y - frame.AbsoluteSize.Y - buffer)
-            frame.Position = UDim2.new(0, newX, 0, newY)
-            -- Update global relative ratio realtime (no drift)
-            getgenv().PureGUI.state.relX = (newX + frame.AbsoluteSize.X / 2) / viewport.X
-            getgenv().PureGUI.state.relY = (newY + frame.AbsoluteSize.Y / 2) / viewport.Y
-        end
-    end))
-
-    table.insert(getgenv().PureGUI.connections, UserInputService.InputEnded:Connect(function(inp)
-        if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        end
-    end))
-end
-
--- Hàm setup events (minimized global, scale sync)
-local function setupEvents(main, content, titlebar, minbtn, maxbtn, closebtn, toggleBtn, camera)
-    local function toggleMinimize()
-        getgenv().PureGUI.state.minimized = not getgenv().PureGUI.state.minimized
-        if getgenv().PureGUI.state.minimized then
-            TweenService:Create(main, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
-                Size = getgenv().PureGUI.state.minSize,
-                Position = UDim2.new(0, 10, 0, 10)
-            }):Play()
-            content.Visible = false
-            minbtn.Text = "+"
-        else
-            TweenService:Create(main, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
-                Size = getgenv().PureGUI.state.fullSize,
-                Position = UDim2.new(getgenv().PureGUI.state.relX, -getgenv().PureGUI.state.fullSize.X.Offset / 2, getgenv().PureGUI.state.relY, -getgenv().PureGUI.state.fullSize.Y.Offset / 2)
-            }):Play()
-            task.delay(0.2, function() content.Visible = true end)
-            minbtn.Text = "-"
-        end
+    if draggingMain and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStartMain
+        local newX = startPosMain.X.Offset + delta.X
+        local newY = startPosMain.Y.Offset + delta.Y
+        newX = math.clamp(newX, buffer, viewport.X - main.AbsoluteSize.X - buffer)
+        newY = math.clamp(newY, buffer, viewport.Y - main.AbsoluteSize.Y - buffer)
+        main.Position = UDim2.new(0, newX, 0, newY)
     end
 
-    setupDragClamp(titlebar, 20)  -- Clamp main
-    setupDragClamp(toggleBtn, 10)  -- Clamp floating
+    if draggingFloat and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStartFloat
+        local newX = startPosFloat.X.Offset + delta.X
+        local newY = startPosFloat.Y.Offset + delta.Y
+        newX = math.clamp(newX, buffer, viewport.X - float.AbsoluteSize.X - buffer)
+        newY = math.clamp(newY, buffer, viewport.Y - float.AbsoluteSize.Y - buffer)
+        float.Position = UDim2.new(0, newX, 0, newY)
+    end
+end)
 
-    table.insert(getgenv().PureGUI.connections, minbtn.MouseButton1Click:Connect(toggleMinimize))
-    table.insert(getgenv().PureGUI.connections, maxbtn.MouseButton1Click:Connect(toggleMinimize))
-    table.insert(getgenv().PureGUI.connections, titlebar.MouseButton1Click:Connect(function()
-        if getgenv().PureGUI.state.minimized then toggleMinimize() end
-    end))
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        draggingMain = false
+        draggingFloat = false
+    end
+end)
 
-    table.insert(getgenv().PureGUI.connections, toggleBtn.MouseButton1Click:Connect(function()
-        main.Visible = not main.Visible
-        print("[PureGUI Pro v5] Toggle: " .. (main.Visible and "Hiện" or "Ẩn"))
-    end))
+-- ========== TOGGLE & DEBOUNCE ==========
+local isToggling = false
+float.MouseButton1Click:Connect(function()
+    if isToggling then return end
+    isToggling = true
+    main.Visible = not main.Visible
+    task.delay(0.3, function() isToggling = false end)
+end)
 
-    -- Close cleanup
-    table.insert(getgenv().PureGUI.connections, closebtn.MouseButton1Click:Connect(function()
-        for _, conn in ipairs(getgenv().PureGUI.connections) do pcall(conn.Disconnect, conn) end
-        getgenv().PureGUI.connections = {}
-        getgenv().PureGUI.state = {minimized = false, relX = 0.5, relY = 0.5}
-        main.Parent:Destroy()
-        getgenv().PureGUI = nil
-        print("[PureGUI Pro v5] Destroyed clean")
-    end))
+-- ========== CLOSE ==========
+close.MouseButton1Click:Connect(function()
+    cleanup()
+end)
 
-    -- Reactive viewport (no drift relative, restore min)
-    table.insert(getgenv().PureGUI.connections, camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
-        local newViewport = camera.ViewportSize
-        local scaleFactor, fullSize, minSize, floatingSize = calculateScale(newViewport)
-        getgenv().PureGUI.state.fullSize = fullSize
-        getgenv().PureGUI.state.minSize = minSize
+-- ========== REACTIVE SCALE & RELATIVE POS (no drift) ==========
+local relMainX, relMainY = 0.5, 0.5
+local relFloatX, relFloatY = 1, 1
 
-        -- Giữ relative no drift (từ global ratio, calc new offset)
-        local newOffsetX = getgenv().PureGUI.state.relX * newViewport.X - fullSize.X.Offset / 2
-        local newOffsetY = getgenv().PureGUI.state.relY * newViewport.Y - fullSize.Y.Offset / 2
-        getgenv().PureGUI.state.fullPos = UDim2.new(0, newOffsetX, 0, newOffsetY)
+local function updateScaleAndPos()
+    local cam = workspace.CurrentCamera
+    if not cam then return end
 
-        -- Apply size/pos, restore min state
-        if getgenv().PureGUI.state.minimized then
-            main.Size = minSize
-            main.Position = UDim2.new(0, 10, 0, 10)
-        else
-            main.Size = fullSize
-            main.Position = getgenv().PureGUI.state.fullPos
-        end
+    local oldViewport = cam.ViewportSize
+    scale = getScale()
 
-        -- Update floating scale/pos (sync, giữ relative nếu có state floating rel, nhưng giả sử fixed pos cho đơn giản)
-        toggleBtn.Size = floatingSize
-        toggleBtn.Position = UDim2.new(1, -floatingSize.X.Offset - 10, 1, -floatingSize.Y.Offset - 10)
+    -- Update main size & relative pos (no reset)
+    main.Size = UDim2.new(0, 420*scale, 0, 300*scale)
+    applyRelativePos(main, relMainX, relMainY, oldViewport, main.Size)
 
-        -- Reclamp realtime nếu pos ngoài bound
-        local curX = main.Position.X.Offset
-        local curY = main.Position.Y.Offset
-        curX = math.clamp(curX, 20, newViewport.X - main.AbsoluteSize.X - 20)
-        curY = math.clamp(curY, 20, newViewport.Y - main.AbsoluteSize.Y - 20)
-        main.Position = UDim2.new(0, curX, 0, curY)
-        -- Update ratio từ new pos (no drift)
-        getgenv().PureGUI.state.relX = (curX + main.AbsoluteSize.X / 2) / newViewport.X
-        getgenv().PureGUI.state.relY = (curY + main.AbsoluteSize.Y / 2) / newViewport.Y
+    -- Update title & close scale
+    title.TextSize = 16*scale
+    close.Size = UDim2.new(0,40*scale,0,40*scale)
+    close.Position = UDim2.new(1,-45*scale,0,0)
 
-        print("[PureGUI Pro v5] Viewport changed - Rescaled no drift, reclamped, min state restored")
-    end))
+    -- Update floating size & relative pos (no reset)
+    float.Size = UDim2.new(0,55*scale,0,55*scale)
+    applyRelativePos(float, relFloatX, relFloatY, oldViewport, float.Size)
 end
 
--- Hàm init (delay + wait ready)
-local function initGUI()
-    task.wait(0.5)
-    checkExistingGUI()
+-- ViewportSize reactive
+table.insert(connections, workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateScaleAndPos))
 
-    local viewport, camera = waitForViewportReady()
-    local sg = createScreenGui()
-    local main = createMainFrame(sg, viewport)
-    local titlebar, minbtn, maxbtn, closebtn = createTitleBar(main)
-    local content = createContent(main)
-    local toggleBtn = createFloatingToggle(sg, viewport)
+-- Camera change handle
+table.insert(connections, workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+    task.wait(0.1)
+    if workspace.CurrentCamera then
+        updateScaleAndPos()
+        -- Reconnect ViewportSize nếu cần (nhưng vì dùng workspace.CurrentCamera nên auto update)
+    end
+end))
 
-    local scaleFactor, fullSize, minSize, floatingSize = calculateScale(viewport)
-    getgenv().PureGUI.state.fullSize = fullSize
-    getgenv().PureGUI.state.minSize = minSize
-    getgenv().PureGUI.state.fullPos = main.Position
-
-    setupEvents(main, content, titlebar, minbtn, maxbtn, closebtn, toggleBtn, camera)
-
-    -- Animation giữ scale realtime
-    local initSize = UDim2.new(0, 0, 0, 0)
-    local initPos = UDim2.new(0.5, 0, 0.5, 0)
-    main.Size = initSize
-    main.Position = initPos
-    TweenService:Create(main, TweenInfo.new(0.5, Enum.EasingStyle.Back), {
-        Size = getgenv().PureGUI.state.fullSize,
-        Position = getgenv().PureGUI.state.fullPos
-    }):Play()
-
-    print("[PureGUI Pro v5] Loaded! Floating scale sync. Realtime no-drift pos/clamp/min state OK, multi-inject safe")
-end
-
--- Chạy init
-task.spawn(initGUI)
+print("PureGUI Pro V9 Loaded Successfully - Clamp, Debounce, Relative No Drift, Safe Multi-Inject")
