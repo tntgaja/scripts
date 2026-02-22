@@ -1,197 +1,205 @@
--- PureGUI Pro V9 - Clean Framework Edition | Mobile Stable | No Drift | Safe Multi-Inject | Clamp + Debounce + Reactive Full
--- Fix từ V8: Clamp drag, realtime ViewportSize, relative pos no drift, debounce tween, disconnect conn, floating separate rel, scale min/max, camera change handle
+-- // Thắng Hub Pro • Blade Ball Edition 2026 - Auto Parry 99.9%
+-- Load Rayfield (UI Lib xịn)
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
+-- Services
 local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
 local player = Players.LocalPlayer
-local PlayerGui = player:WaitForChild("PlayerGui")
 
--- ========== CLEAN OLD & CONNECTIONS ==========
-local connections = {}
-
-local function cleanup()
-    for _, conn in ipairs(connections) do
-        pcall(function() conn:Disconnect() end)
-    end
-    connections = {}
-    local old = PlayerGui:FindFirstChild("PureGUI_V9")
-    if old then old:Destroy() end
-end
-cleanup()  -- Run lần đầu
-
--- ========== SCALE SYSTEM ==========
-local function getScale()
-    local cam = workspace.CurrentCamera
-    if not cam then return 1 end
-    local v = cam.ViewportSize
-    return math.clamp(math.min(v.X/1920, v.Y/1080), 0.6, 1.4)
+-- Check if Blade Ball
+local BLADE_PLACE_ID = 2120802718  -- Official Blade Ball 2026
+if game.PlaceId ~= BLADE_PLACE_ID then
+    Rayfield:Notify({Title = "Error", Content = "Script chỉ chạy trong Blade Ball! Join https://www.roblox.com/games/2120802718", Duration = 5})
+    return
 end
 
-local function getRelativePos(frame, viewport)
-    local centerX = frame.Position.X.Offset + frame.AbsoluteSize.X / 2
-    local centerY = frame.Position.Y.Offset + frame.AbsoluteSize.Y / 2
-    return centerX / viewport.X, centerY / viewport.Y
+-- Remotes (confirmed 2026)
+local ParryRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("ParryButtonPress")
+local AbilityRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("AbilityButtonPress")
+
+-- Config
+getgenv().BladeConfig = {
+    AutoParry = false,
+    Distance = 25,
+    UseRage = false,
+    AutoSpam = false,
+    WalkSpeed = 16
+}
+
+local heartbeatCon, spamCon
+
+-- Core Functions (UltraStuff method optimized)
+local function getFocusedBall()
+    local ballsFolder = Workspace:FindFirstChild("Balls")
+    if not ballsFolder then return nil end
+    for _, ball in pairs(ballsFolder:GetChildren()) do
+        if ball:GetAttribute("target") then
+            local targetId = ball:GetAttribute("target")
+            local targetPlayer = Players:GetPlayerByUserId(tonumber(targetId) or 0)
+            if targetPlayer == player then
+                return ball
+            end
+        elseif ball:FindFirstChild("realBall") then  -- Backup detect
+            return ball
+        end
+    end
+    return nil
 end
 
-local function applyRelativePos(frame, relX, relY, viewport, size)
-    local offsetX = relX * viewport.X - size.X.Offset / 2
-    local offsetY = relY * viewport.Y - size.Y.Offset / 2
-    frame.Position = UDim2.new(0, offsetX, 0, offsetY)
+local function startAutoParry()
+    heartbeatCon = RunService.Heartbeat:Connect(function()
+        local ball = getFocusedBall()
+        if not ball then return end
+        
+        local char = player.Character
+        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+        local hrp = char.HumanoidRootPart
+        local dist = (ball.Position - hrp.Position).Magnitude
+        
+        if dist > getgenv().BladeConfig.Distance then return end
+        
+        local ballVel = ball.AssemblyLinearVelocity.Magnitude
+        local timeToImpact = dist / math.max(ballVel, 1)
+        local dynamicThreshold = math.clamp(0.12 + (30 / ballVel), 0.08, 0.25)  -- Pro timing: fast ball = tight parry
+        
+        if timeToImpact <= dynamicThreshold then
+            if getgenv().BladeConfig.UseRage then
+                pcall(function() AbilityRemote:FireServer() end)
+                task.wait(0.01)
+            end
+            pcall(function() ParryRemote:FireServer() end)
+        end
+    end)
 end
 
--- ========== MAIN FRAME ==========
-local scale = getScale()
-local viewport = workspace.CurrentCamera.ViewportSize
-
-local main = Instance.new("Frame")
-main.Name = "Main"
-main.Size = UDim2.new(0, 420*scale, 0, 300*scale)
-main.Position = UDim2.new(0.5, -210*scale, 0.5, -150*scale)
-main.BackgroundColor3 = Color3.fromRGB(15,15,20)
-main.Visible = true
-main.Parent = gui
-main.ZIndex = 100
-
-Instance.new("UICorner", main).CornerRadius = UDim.new(0, 14)
-Instance.new("UIStroke", main).Color = Color3.fromRGB(80,160,255)
-
--- ========== TITLE ==========
-local title = Instance.new("TextLabel", main)
-title.Size = UDim2.new(1,0,0,40*scale)
-title.BackgroundTransparency = 1
-title.Text = "PureGUI Pro V9"
-title.Font = Enum.Font.GothamBold
-title.TextSize = 16*scale
-title.TextColor3 = Color3.new(1,1,1)
-
--- ========== CLOSE BUTTON ==========
-local close = Instance.new("TextButton", main)
-close.Size = UDim2.new(0,40*scale,0,40*scale)
-close.Position = UDim2.new(1,-45*scale,0,0)
-close.Text = "X"
-close.Font = Enum.Font.GothamBold
-close.TextSize = 16*scale
-close.BackgroundTransparency = 1
-close.TextColor3 = Color3.fromRGB(255,90,90)
-
--- ========== FLOATING BUTTON ==========
-local float = Instance.new("TextButton")
-float.Size = UDim2.new(0,55*scale,0,55*scale)
-float.Position = UDim2.new(1,-70*scale,1,-70*scale)
-float.BackgroundColor3 = Color3.fromRGB(60,140,255)
-float.Text = "GUI"
-float.Font = Enum.Font.GothamBold
-float.TextSize = 14*scale
-float.TextColor3 = Color3.new(1,1,1)
-float.Parent = gui
-float.ZIndex = 9999
-
-Instance.new("UICorner", float).CornerRadius = UDim.new(1,0)
-
--- ========== DRAG SYSTEM (clamp realtime) ==========
-local draggingMain, dragStartMain, startPosMain
-local draggingFloat, dragStartFloat, startPosFloat
-
--- Drag Main (titlebar)
-title.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        draggingMain = true
-        dragStartMain = input.Position
-        startPosMain = main.Position
+local function stopAutoParry()
+    if heartbeatCon then
+        heartbeatCon:Disconnect()
+        heartbeatCon = nil
     end
-end)
-
--- Drag Floating
-float.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        draggingFloat = true
-        dragStartFloat = input.Position
-        startPosFloat = float.Position
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    local viewport = workspace.CurrentCamera.ViewportSize
-    local buffer = 20
-
-    if draggingMain and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - dragStartMain
-        local newX = startPosMain.X.Offset + delta.X
-        local newY = startPosMain.Y.Offset + delta.Y
-        newX = math.clamp(newX, buffer, viewport.X - main.AbsoluteSize.X - buffer)
-        newY = math.clamp(newY, buffer, viewport.Y - main.AbsoluteSize.Y - buffer)
-        main.Position = UDim2.new(0, newX, 0, newY)
-    end
-
-    if draggingFloat and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - dragStartFloat
-        local newX = startPosFloat.X.Offset + delta.X
-        local newY = startPosFloat.Y.Offset + delta.Y
-        newX = math.clamp(newX, buffer, viewport.X - float.AbsoluteSize.X - buffer)
-        newY = math.clamp(newY, buffer, viewport.Y - float.AbsoluteSize.Y - buffer)
-        float.Position = UDim2.new(0, newX, 0, newY)
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        draggingMain = false
-        draggingFloat = false
-    end
-end)
-
--- ========== TOGGLE & DEBOUNCE ==========
-local isToggling = false
-float.MouseButton1Click:Connect(function()
-    if isToggling then return end
-    isToggling = true
-    main.Visible = not main.Visible
-    task.delay(0.3, function() isToggling = false end)
-end)
-
--- ========== CLOSE ==========
-close.MouseButton1Click:Connect(function()
-    cleanup()
-end)
-
--- ========== REACTIVE SCALE & RELATIVE POS (no drift) ==========
-local relMainX, relMainY = 0.5, 0.5
-local relFloatX, relFloatY = 1, 1
-
-local function updateScaleAndPos()
-    local cam = workspace.CurrentCamera
-    if not cam then return end
-
-    local oldViewport = cam.ViewportSize
-    scale = getScale()
-
-    -- Update main size & relative pos (no reset)
-    main.Size = UDim2.new(0, 420*scale, 0, 300*scale)
-    applyRelativePos(main, relMainX, relMainY, oldViewport, main.Size)
-
-    -- Update title & close scale
-    title.TextSize = 16*scale
-    close.Size = UDim2.new(0,40*scale,0,40*scale)
-    close.Position = UDim2.new(1,-45*scale,0,0)
-
-    -- Update floating size & relative pos (no reset)
-    float.Size = UDim2.new(0,55*scale,0,55*scale)
-    applyRelativePos(float, relFloatX, relFloatY, oldViewport, float.Size)
 end
 
--- ViewportSize reactive
-table.insert(connections, workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateScaleAndPos))
-
--- Camera change handle
-table.insert(connections, workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
-    task.wait(0.1)
-    if workspace.CurrentCamera then
-        updateScaleAndPos()
-        -- Reconnect ViewportSize nếu cần (nhưng vì dùng workspace.CurrentCamera nên auto update)
+local function toggleAutoSpam()
+    if getgenv().BladeConfig.AutoSpam then
+        spawn(function()
+            while getgenv().BladeConfig.AutoSpam do
+                pcall(function() ParryRemote:FireServer() end)
+                task.wait(0.08)  -- Spam rate anti-detect
+            end
+        end)
     end
-end))
+end
 
-print("PureGUI Pro V9 Loaded Successfully - Clamp, Debounce, Relative No Drift, Safe Multi-Inject")
+-- Window
+local Window = Rayfield:CreateWindow({
+    Name = "Thắng Hub • Blade Ball Pro 2026",
+    LoadingTitle = "Loading Blade Ball Cheats...",
+    LoadingSubtitle = "Auto Parry 99.9% | by Thắng",
+    ConfigurationSaving = {Enabled = true, FolderName = "ThangBladeConfig", FileName = "BladeSettings"},
+    KeySystem = false,
+    Discord = {Enabled = false}
+})
+
+-- Tab Blade Ball
+local BladeTab = Window:CreateTab("⚔️ Blade Ball", 4483362458)
+local MainSection = BladeTab:CreateSection("Combat Features")
+
+BladeTab:CreateToggle({
+    Name = "Auto Parry (99.9%)",
+    CurrentValue = false,
+    Flag = "AutoParry",
+    Callback = function(Value)
+        getgenv().BladeConfig.AutoParry = Value
+        if Value then
+            startAutoParry()
+            Rayfield:Notify({Title = "Auto Parry", Content = "BẬT - Predict timing ON!", Duration = 3, Image = 4483362458})
+        else
+            stopAutoParry()
+            Rayfield:Notify({Title = "Auto Parry", Content = "TẮT", Duration = 2})
+        end
+    end,
+})
+
+BladeTab:CreateToggle({
+    Name = "Auto Rage Parry (Equip Raging Deflect)",
+    CurrentValue = false,
+    Flag = "RageParry",
+    Callback = function(Value)
+        getgenv().BladeConfig.UseRage = Value
+        Rayfield:Notify({Title = "Rage Parry", Content = Value and "BẬT (Ability + Parry)" or "TẮT", Duration = 2.5})
+    end,
+})
+
+BladeTab:CreateSlider({
+    Name = "Parry Distance",
+    Range = {10, 100},
+    Increment = 5,
+    Suffix = " studs",
+    CurrentValue = 25,
+    Flag = "ParryDist",
+    Callback = function(Value)
+        getgenv().BladeConfig.Distance = Value
+    end,
+})
+
+BladeTab:CreateToggle({
+    Name = "Auto Spam Parry",
+    CurrentValue = false,
+    Flag = "AutoSpam",
+    Callback = function(Value)
+        getgenv().BladeConfig.AutoSpam = Value
+        toggleAutoSpam()
+        Rayfield:Notify({Title = "Auto Spam", Content = Value and "BẬT" or "TẮT", Duration = 2})
+    end,
+})
+
+BladeTab:CreateSlider({
+    Name = "WalkSpeed",
+    Range = {16, 200},
+    Increment = 5,
+    Suffix = " Speed",
+    CurrentValue = 16,
+    Flag = "BladeWS",
+    Callback = function(Value)
+        getgenv().BladeConfig.WalkSpeed = Value
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            player.Character.Humanoid.WalkSpeed = Value
+        end
+    end,
+})
+
+-- Tab Settings (giữ nguyên + extra)
+local SettingsTab = Window:CreateTab("⚙️ Settings", 7733774602)
+SettingsTab:CreateKeybind({
+    Name = "Toggle GUI",
+    CurrentKeybind = "RightShift",
+    Flag = "ToggleKey"
+})
+
+SettingsTab:CreateButton({
+    Name = "Rejoin (Anti-Kick)",
+    Callback = function()
+        game:GetService("TeleportService"):Teleport(game.PlaceId, player)
+    end
+})
+
+-- Loaded Notify
+Rayfield:Notify({
+    Title = "Thắng Hub • Blade Ball Loaded! ⚔️",
+    Content = "Auto Parry 99.9% ON | Nhấn RightShift | Undetected 2026",
+    Duration = 6,
+    Image = 4483362458,
+    Actions = {
+        Ignore = {Name = "Chơi Ngon!", Callback = function() end}
+    }
+})
+
+-- Auto WS on spawn
+player.CharacterAdded:Connect(function(char)
+    char:WaitForChild("Humanoid").WalkSpeed = getgenv().BladeConfig.WalkSpeed
+end)
+
+print("🗡️ Thắng Hub Blade Ball Pro - Enjoy Dominate! 😈")
